@@ -2,32 +2,27 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const fedexRoutes = require('./routes/fedex');
-const parcelRoutes = require('./routes/parcels');
+const parcelRoutes = require('./routes/parcels'); // ✅ this line
 
 dotenv.config();
 
 const app = express();
-
-// Enable CORS and JSON parsing
 app.use(cors());
 app.use(express.json());
 
-// ✅ Serve Static Files from /public (HTML, JS, CSS)
+// ✅ serve static frontend files from /public
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ✅ API Routes
-app.use('/api/fedex', fedexRoutes);
-app.use('/api/parcels', parcelRoutes);
+// ✅ connect parcels API
+app.use('/api/parcels', parcelRoutes); // ✅ this line
 
-// ✅ Health check (basic root route)
+// health check
 app.get('/', (req, res) => {
-  res.send('📦 MM Courier API is running');
+  res.send('📦 MM Courier API is live');
 });
 
-// ✅ Start Server
+// start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`✅ MM Courier server running on port ${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });
-
