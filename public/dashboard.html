@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MM Courier Dashboard</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background-color: #f4f4f4; }
+  </style>
+</head>
+<body>
+  <h1>📦 MM Courier - Parcel Dashboard</h1>
+  <table id="parcelTable">
+    <thead>
+      <tr>
+        <th>Tracking Number</th>
+        <th>Scan Type</th>
+        <th>Status</th>
+        <th>Comments</th>
+        <th>Uploaded POD</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    async function loadParcels() {
+      const res = await fetch('/api/parcels');
+      const parcels = await res.json();
+      const tbody = document.querySelector('#parcelTable tbody');
+      tbody.innerHTML = '';
+
+      parcels.forEach(p => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${p.tracking_number}</td>
+          <td>${p.scan_type}</td>
+          <td>${p.status}</td>
+          <td>${p.comments || ''}</td>
+          <td>${p.pod_url ? `<a href="${p.pod_url}" target="_blank">View POD</a>` : '—'}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    loadParcels();
+  </script>
+</body>
+</html>
