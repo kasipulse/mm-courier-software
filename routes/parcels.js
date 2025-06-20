@@ -1,25 +1,18 @@
-// routes/pod.js
+// routes/parcels.js
+
 const express = require('express');
-const multer = require('multer');
-const cloudinary = require('cloudinary').v2;
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-const upload = multer({ dest: 'uploads/' });
 const router = express.Router();
+const supabase = require('../db');
 
-router.post('/upload', upload.single('pod'), async (req, res) => {
-  try {
-    const result = await cloudinary.uploader.upload(req.file.path);
-    res.json({ message: 'Uploaded POD', url: result.secure_url });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Upload failed' });
+// GET all parcels
+router.get('/', async (req, res) => {
+  const { data, error } = await supabase.from('parcels').select('*');
+
+  if (error) {
+    return res.status(500).json({ error: error.message });
   }
+
+  res.json(data);
 });
 
 module.exports = router;
