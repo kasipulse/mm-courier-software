@@ -1,10 +1,8 @@
-// routes/parcels.js
-
 const express = require('express');
 const router = express.Router();
 const supabase = require('../db');
 
-// GET all parcels
+// Simple test route
 router.get('/', async (req, res) => {
   const { data, error } = await supabase.from('parcels').select('*');
 
