@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Scan-In | MM Courier</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      background-color: #f7f7f7;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    #result {
+      margin-top: 20px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 15px;
+      font-size: 1.2rem;
+      margin-top: 20px;
+      box-sizing: border-box;
+    }
+
+    .success {
+      color: green;
+    }
+
+    .error {
+      color: red;
+    }
+
+    .logo {
+      display: block;
+      margin: 0 auto 20px;
+      height: 70px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Logo -->
+  <img
+    src="https://res.cloudinary.com/dwxgkbuln/image/upload/v1750675472/pakisa_logistics_express_pty_ltd_logo-removebg-preview_kbuvzs.png"
+    alt="MM Courier Logo"
+    class="logo"
+  >
+
+  <h1>📦 Parcel Scan-In</h1>
+
+  <input type="text" id="trackingInput" placeholder="Scan or enter tracking number" autofocus>
+
+  <div id="result"></div>
+
+  <script>
+    const input = document.getElementById('trackingInput');
+    const result = document.getElementById('result');
+
+    input.addEventListener('keypress', async function (e) {
+      if (e.key === 'Enter') {
+        const trackingNumber = input.value.trim();
+        if (!trackingNumber) return;
+
+        try {
+          const res = await fetch(`/api/parcels/scanin/${trackingNumber}`, {
+            method: 'PUT'
+          });
+
+          const data = await res.json();
+
+          if (data.success) {
+            result.textContent = '✅ Parcel scanned in successfully.';
+            result.className = 'success';
+          } else {
+            result.textContent = '❌ ' + data.message;
+            result.className = 'error';
+          }
+        } catch (err) {
+          result.textContent = '❌ Server error.';
+          result.className = 'error';
+        }
+
+        input.value = '';
+        input.focus();
+      }
+    });
+  </script>
+</body>
+</html>
