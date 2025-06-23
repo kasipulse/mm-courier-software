@@ -82,19 +82,17 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Enable file uploads
 const upload = multer();
 
 router.post('/pod', upload.single('image'), async (req, res) => {
-  const { tracking_number, received_by } = req.body;
+  const { tracking_number, received_by, delivered_at_time } = req.body;
   const file = req.file;
 
-  if (!file || !tracking_number || !received_by) {
+  if (!file || !tracking_number || !received_by || !delivered_at_time) {
     return res.status(400).json({ success: false, message: 'Missing required fields.' });
   }
 
   try {
-    // Upload to Cloudinary
     const streamUpload = (buffer) => {
       return new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
@@ -110,17 +108,17 @@ router.post('/pod', upload.single('image'), async (req, res) => {
 
     const uploadResult = await streamUpload(file.buffer);
 
-    // Update Supabase
     const { data, error } = await supabase
       .from('parcels')
       .update({
         status: 'Delivered',
         pod_url: uploadResult.secure_url,
         received_by,
-        delivered_at: new Date().toISOString()
+        delivered_at: new Date().toISOString(),
+        delivered_at_time
       })
       .eq('tracking_number', tracking_number)
-      .eq('status', 'Scanned Out') // only allow if parcel was scanned out
+      .eq('status', 'Scanned Out') // Only update if parcel was scanned out
       .single();
 
     if (error || !data) throw error || new Error('Parcel not found or not eligible for POD.');
