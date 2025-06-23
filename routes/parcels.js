@@ -6,7 +6,7 @@ require('dotenv').config();
 // Supabase connection
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
-// 🔁 GET all parcels
+// 🔁 GET all parcels (for dashboard or reporting)
 router.get('/', async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -29,9 +29,12 @@ router.put('/scanin/:tracking_number', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('parcels')
-      .update({ status: 'Received' })
+      .update({
+        status: 'Received',
+        received_date: new Date().toISOString()
+      })
       .eq('tracking_number', tracking_number)
-      .eq('status', 'Pending') // only update if still pending
+      .eq('status', 'Pending') // Only update if still pending
       .single();
 
     if (error || !data) throw error || new Error('Parcel not found or already received');
@@ -42,22 +45,28 @@ router.put('/scanin/:tracking_number', async (req, res) => {
   }
 });
 
-// ✅ SCAN OUT route — mark parcel as scanned out
-router.put('/:id/scanout', async (req, res) => {
-  const { id } = req.params;
+// ✅ SCAN OUT route — assign to driver and mark scanned out
+router.put('/:tracking_number/scanout', async (req, res) => {
+  const { tracking_number } = req.params;
+  const { driver_name } = req.body;
 
   try {
     const { data, error } = await supabase
       .from('parcels')
-      .update({ status: 'Scanned Out' })
-      .eq('id', id)
+      .update({
+        status: 'Scanned Out',
+        driver_name,
+        scanned_out_at: new Date().toISOString()
+      })
+      .eq('tracking_number', tracking_number)
+      .eq('status', 'Received') // Only scan out parcels already received
       .single();
 
-    if (error) throw error;
-    res.json({ success: true, message: 'Parcel scanned out successfully.' });
+    if (error || !data) throw error || new Error('Parcel not found or already scanned out');
+    res.json({ success: true, message: 'Parcel assigned to driver successfully.' });
   } catch (err) {
     console.error('Scan-out error:', err.message);
-    res.status(500).json({ success: false, error: 'Failed to scan out parcel.' });
+    res.status(400).json({ success: false, message: err.message });
   }
 });
 
