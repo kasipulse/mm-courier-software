@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MM Courier | Home</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --primary: #0a2b52;
+      --accent: #409dbc;
+      --highlight: #cebd80;
+      --base: #ffffff;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: var(--base);
+      color: var(--primary);
+    }
+
+    header {
+      background-color: var(--primary);
+      padding: 20px;
+      color: white;
+      text-align: center;
+    }
+
+    header img {
+      height: 60px;
+      margin-bottom: 10px;
+    }
+
+    nav {
+      background-color: var(--accent);
+      padding: 10px;
+      text-align: center;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      margin: 0 15px;
+      font-weight: bold;
+    }
+
+    nav a:hover {
+      text-decoration: underline;
+    }
+
+    .hero {
+      background: linear-gradient(rgba(10, 43, 82, 0.7), rgba(10, 43, 82, 0.7)),
+                  url('https://res.cloudinary.com/dwxgkbuln/image/upload/v1750675472/pakisa_logistics_express_pty_ltd_logo-removebg-preview_kbuvzs.png') no-repeat center;
+      background-size: contain;
+      text-align: center;
+      color: white;
+      padding: 80px 20px;
+    }
+
+    .hero h1 {
+      font-size: 40px;
+      margin-bottom: 10px;
+    }
+
+    .hero p {
+      font-size: 18px;
+    }
+
+    .content {
+      padding: 40px 20px;
+      max-width: 1000px;
+      margin: auto;
+      text-align: center;
+    }
+
+    .content h2 {
+      color: var(--accent);
+      margin-bottom: 20px;
+    }
+
+    .tiles {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 30px;
+      margin-top: 30px;
+    }
+
+    .tile {
+      background: #f4f4f4;
+      border: 2px solid var(--highlight);
+      border-radius: 10px;
+      padding: 30px;
+      width: 250px;
+      transition: all 0.2s ease-in-out;
+    }
+
+    .tile:hover {
+      transform: scale(1.05);
+      background: var(--highlight);
+      color: var(--primary);
+    }
+
+    footer {
+      background-color: var(--primary);
+      color: white;
+      text-align: center;
+      padding: 15px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <img src="https://res.cloudinary.com/dwxgkbuln/image/upload/v1750675472/pakisa_logistics_express_pty_ltd_logo-removebg-preview_kbuvzs.png" alt="MM Courier Logo">
+    <h1>Welcome to MM Courier</h1>
+    <p>Courier | Logistics | Tracking | PODs</p>
+  </header>
+
+  <nav>
+    <a href="/dashboard.html">Dashboard</a>
+    <a href="/tripsheet.html">Tripsheets</a>
+    <a href="/scanin.html">Scan In</a>
+    <a href="/scanout.html">Scan Out</a>
+    <a href="/pod.html">Upload POD</a>
+    <a href="/login.html">Driver Login</a>
+  </nav>
+
+  <section class="hero">
+    <h1>Fast. Reliable. Professional.</h1>
+    <p>We connect South Africa, one parcel at a time.</p>
+  </section>
+
+  <section class="content">
+    <h2>What We Offer</h2>
+    <div class="tiles">
+      <div class="tile">
+        <h3>Real-Time Tracking</h3>
+        <p>Monitor all parcels received, scanned out, and delivered instantly.</p>
+      </div>
+      <div class="tile">
+        <h3>Sign-on-Glass</h3>
+        <p>Drivers capture digital signatures for accountability and transparency.</p>
+      </div>
+      <div class="tile">
+        <h3>Optimized Routes</h3>
+        <p>Plan your delivery routes efficiently using Google Maps integration.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    © MM Courier | 10 Burry Koean Street, Jet Park, Boksburg, 1469 | 
+    <a href="mailto:ops1@pakisalogistics.co.za" style="color:#cebd80;">ops1@pakisalogistics.co.za</a> | 
+    011 397 1151 | <a href="https://www.pakisalogistics.co.za" target="_blank" style="color:#cebd80;">www.pakisalogistics.co.za</a>
+  </footer>
+
+</body>
+</html>
