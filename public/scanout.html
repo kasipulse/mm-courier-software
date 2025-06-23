@@ -1,1 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Scan Out | MM Courier</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 30px; background: #f9f9f9; }
+    h1, label { text-align: center; display: block; }
+    input, button {
+      display: block;
+      margin: 10px auto;
+      padding: 12px;
+      font-size: 1rem;
+      width: 100%;
+      max-width: 400px;
+    }
+    #result { text-align: center; font-weight: bold; margin-top: 15px; }
+    .success { color: green; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
 
+  <h1>🚚 Scan Out (Tripsheet)</h1>
+
+  <label for="driver">Driver Name</label>
+  <input type="text" id="driver" placeholder="e.g. Vusani">
+
+  <label for="tracking">Tracking Number</label>
+  <input type="text" id="tracking" placeholder="Scan tracking number here" autofocus>
+
+  <div id="result"></div>
+
+  <script>
+    const driverInput = document.getElementById('driver');
+    const trackingInput = document.getElementById('tracking');
+    const result = document.getElementById('result');
+
+    trackingInput.addEventListener('keypress', async function (e) {
+      if (e.key === 'Enter') {
+        const tracking = trackingInput.value.trim();
+        const driver = driverInput.value.trim();
+
+        if (!tracking || !driver) {
+          result.textContent = '❗ Please enter both driver and tracking number.';
+          result.className = 'error';
+          return;
+        }
+
+        try {
+          const res = await fetch(`/api/parcels/${tracking}/scanout`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ driver_name: driver })
+          });
+
+          const data = await res.json();
+
+          if (data.success) {
+            result.textContent = `✅ Parcel assigned to ${driver}`;
+            result.className = 'success';
+          } else {
+            result.textContent = `❌ ${data.message}`;
+            result.className = 'error';
+          }
+        } catch (err) {
+          result.textContent = '❌ Server error';
+          result.className = 'error';
+        }
+
+        trackingInput.value = '';
+        trackingInput.focus();
+      }
+    });
+  </script>
+
+</body>
+</html>
