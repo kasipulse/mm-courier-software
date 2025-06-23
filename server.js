@@ -2,7 +2,8 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const parcelRoutes = require('./routes/parcels'); // ✅ routes
+const parcelRoutes = require('./routes/parcels'); // ✅ parcels routes
+const authRoutes = require('./routes/auth');      // ✅ auth routes
 
 dotenv.config();
 
@@ -15,6 +16,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ✅ API routes
 app.use('/api/parcels', parcelRoutes);
+app.use('/api/auth', authRoutes);  // <-- Add auth route hook here
 
 // ✅ Health check
 app.get('/', (req, res) => {
