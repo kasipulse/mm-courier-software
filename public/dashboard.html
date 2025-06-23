@@ -1,47 +1,90 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title>MM Courier Dashboard</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-    th { background-color: #f4f4f4; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      background-color: #f4f4f4;
+    }
+    h1 {
+      color: #222;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+      background: white;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    th {
+      background-color: #333;
+      color: white;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
   </style>
 </head>
 <body>
-  <h1>📦 MM Courier - Parcel Dashboard</h1>
-  <table id="parcelTable">
+  <h1>📦 MM Courier Parcel Dashboard</h1>
+
+  <table id="parcelsTable">
     <thead>
       <tr>
-        <th>Tracking Number</th>
-        <th>Scan Type</th>
+        <th>Waybill #</th>
+        <th>Tracking #</th>
+        <th>Content</th>
+        <th>Customer</th>
+        <th>Date Received</th>
         <th>Status</th>
-        <th>Comments</th>
-        <th>Uploaded POD</th>
       </tr>
     </thead>
-    <tbody></tbody>
+    <tbody>
+      <!-- Parcel rows will go here -->
+    </tbody>
   </table>
 
   <script>
     async function loadParcels() {
-      const res = await fetch('/api/parcels');
-      const parcels = await res.json();
-      const tbody = document.querySelector('#parcelTable tbody');
-      tbody.innerHTML = '';
+      try {
+        const res = await fetch('/api/parcels');
+        const parcels = await res.json();
 
-      parcels.forEach(p => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${p.tracking_number}</td>
-          <td>${p.scan_type}</td>
-          <td>${p.status}</td>
-          <td>${p.comments || ''}</td>
-          <td>${p.pod_url ? `<a href="${p.pod_url}" target="_blank">View POD</a>` : '—'}</td>
-        `;
-        tbody.appendChild(row);
-      });
+        const tableBody = document.querySelector('#parcelsTable tbody');
+        tableBody.innerHTML = '';
+
+        if (parcels.length === 0) {
+          const row = document.createElement('tr');
+          const cell = document.createElement('td');
+          cell.colSpan = 6;
+          cell.textContent = 'No parcels found.';
+          row.appendChild(cell);
+          tableBody.appendChild(row);
+        }
+
+        parcels.forEach(parcel => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${parcel.waybill_number || ''}</td>
+            <td>${parcel.tracking_number || ''}</td>
+            <td>${parcel.content || ''}</td>
+            <td>${parcel.customer || ''}</td>
+            <td>${parcel.received_date || ''}</td>
+            <td>${parcel.status || ''}</td>
+          `;
+          tableBody.appendChild(row);
+        });
+      } catch (err) {
+        alert("Failed to load parcels.");
+        console.error(err);
+      }
     }
 
     loadParcels();
