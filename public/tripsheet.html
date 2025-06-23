@@ -2,126 +2,154 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Tripsheet | MM Courier</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tripsheet - MM Courier</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4; }
-    header { text-align: center; margin-bottom: 20px; }
-    img.logo { max-width: 200px; }
-    h1 { margin: 5px 0; }
-    form, .tripsheet { max-width: 700px; margin: auto; background: white; padding: 20px; border-radius: 8px; }
-    label { display: block; margin-top: 15px; }
-    input, button { padding: 10px; width: 100%; margin-top: 5px; }
-    .parcels { margin-top: 20px; }
-    canvas { border: 1px solid #000; width: 100%; height: 150px; margin-top: 10px; }
-    .actions { margin-top: 20px; text-align: center; }
-    .info { font-size: 14px; color: gray; text-align: center; margin-top: 30px; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f4f4f4;
+    }
+    header {
+      text-align: center;
+      border-bottom: 2px solid #000;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+    header img {
+      max-height: 80px;
+    }
+    .contact {
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    h2 {
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      margin-bottom: 30px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background: #eee;
+    }
+    #signature-pad {
+      border: 1px solid #ccc;
+      background: #fff;
+      height: 150px;
+      width: 100%;
+    }
+    button {
+      padding: 10px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
   <header>
-    <img src="https://res.cloudinary.com/dwxgkbuln/image/upload/v1750675472/pakisa_logistics_express_pty_ltd_logo-removebg-preview_kbuvzs.png" class="logo" alt="Logo" />
-    <h1>MM Courier Tripsheet</h1>
-    <div class="info">
+    <img src="https://res.cloudinary.com/dwxgkbuln/image/upload/v1750675472/pakisa_logistics_express_pty_ltd_logo-removebg-preview_kbuvzs.png" alt="Pakisa Logo" />
+    <div class="contact">
+      <strong>Pakisa Logistics Express (Pty) Ltd</strong><br>
       10 Burry Koean Street, Jet Park, Boksburg, 1469<br>
-      📞 011 397 1151 | 🌐 www.pakisalogistics.co.za | ✉️ ops1@pakisalogistics.co.za
+      Email: ops1@pakisalogistics.co.za | Tel: 011 397 1151<br>
+      Website: www.pakisalogistics.co.za
     </div>
   </header>
 
-  <form id="loginForm">
-    <label>Driver Name</label>
-    <input type="text" id="driverName" required>
-    <button type="submit">View My Tripsheet</button>
-  </form>
+  <h2>Driver Tripsheet</h2>
+  <p><strong>Driver:</strong> <span id="driver-name"></span></p>
 
-  <div class="tripsheet" style="display: none;" id="tripsheetSection">
-    <h2>Your Parcels</h2>
-    <ul id="parcelList" class="parcels"></ul>
+  <table id="parcels-table">
+    <thead>
+      <tr>
+        <th>Tracking Number</th>
+        <th>Content</th>
+        <th>Customer</th>
+        <th>Address</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Filled by JS -->
+    </tbody>
+  </table>
 
-    <div class="actions">
-      <a id="mapLink" href="#" target="_blank">🗺️ Open Route in Google Maps</a>
-    </div>
+  <button id="optimize-route">🗺 Optimize Route in Google Maps</button>
 
-    <h3>Sign on Glass</h3>
-    <canvas id="signatureCanvas"></canvas>
-    <button onclick="clearSignature()">Clear Signature</button>
-    <button onclick="submitSignature()">Submit Signature</button>
-  </div>
+  <h3>Driver Signature (Sign-on-Glass)</h3>
+  <canvas id="signature-pad"></canvas>
+  <button onclick="clearSignature()">Clear Signature</button>
 
   <script>
-    const loginForm = document.getElementById('loginForm');
-    const tripsheetSection = document.getElementById('tripsheetSection');
-    const parcelList = document.getElementById('parcelList');
-    const mapLink = document.getElementById('mapLink');
+    const urlParams = new URLSearchParams(window.location.search);
+    const driver = urlParams.get('driver') || 'Unknown';
+    document.getElementById('driver-name').textContent = driver;
 
-    loginForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const driver = document.getElementById('driverName').value.trim();
-
+    async function fetchParcels() {
       const res = await fetch('/api/parcels');
       const parcels = await res.json();
+      const table = document.querySelector('#parcels-table tbody');
 
-      const driverParcels = parcels.filter(p => p.driver_name?.toLowerCase() === driver.toLowerCase());
+      const assigned = parcels.filter(p => p.driver_name === driver && p.status === 'Scanned Out');
+      assigned.forEach(p => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${p.tracking_number}</td>
+          <td>${p.content || ''}</td>
+          <td>${p.customer || ''}</td>
+          <td>${p.delivery_address || ''}</td>
+          <td>${p.status}</td>
+        `;
+        table.appendChild(row);
+      });
+    }
 
-      if (driverParcels.length === 0) {
-        alert('No parcels assigned to this driver.');
+    // Route optimization via Google Maps
+    document.getElementById('optimize-route').addEventListener('click', () => {
+      const rows = document.querySelectorAll('#parcels-table tbody tr');
+      const addresses = Array.from(rows).map(row => row.cells[3].textContent).filter(Boolean);
+      if (addresses.length < 2) {
+        alert('Need at least 2 addresses to optimize.');
         return;
       }
 
-      tripsheetSection.style.display = 'block';
-      parcelList.innerHTML = '';
-      const stops = [];
-
-      driverParcels.forEach(p => {
-        parcelList.innerHTML += `<li><strong>${p.tracking_number}</strong> - ${p.customer} (${p.address})</li>`;
-        stops.push(encodeURIComponent(p.address));
-      });
-
-      // Google Maps multi-stop route
       const base = 'https://www.google.com/maps/dir/';
-      const fullRoute = base + stops.join('/');
-      mapLink.href = fullRoute;
+      const route = addresses.map(a => encodeURIComponent(a)).join('/');
+      window.open(base + route, '_blank');
     });
 
-    // Sign-on-glass functions
-    const canvas = document.getElementById('signatureCanvas');
+    // Signature Pad
+    const canvas = document.getElementById('signature-pad');
     const ctx = canvas.getContext('2d');
     let drawing = false;
 
-    canvas.addEventListener('mousedown', () => drawing = true);
-    canvas.addEventListener('mouseup', () => drawing = false);
-    canvas.addEventListener('mouseout', () => drawing = false);
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('touchstart', () => drawing = true);
-    canvas.addEventListener('touchend', () => drawing = false);
-    canvas.addEventListener('touchcancel', () => drawing = false);
-    canvas.addEventListener('touchmove', (e) => {
-      const touch = e.touches[0];
-      draw({ offsetX: touch.clientX - canvas.offsetLeft, offsetY: touch.clientY - canvas.offsetTop });
+    canvas.addEventListener('mousedown', e => {
+      drawing = true;
+      ctx.moveTo(e.offsetX, e.offsetY);
     });
 
-    function draw(e) {
-      if (!drawing) return;
-      const x = e.offsetX;
-      const y = e.offsetY;
-      ctx.lineWidth = 2;
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = '#000';
-      ctx.lineTo(x, y);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-    }
+    canvas.addEventListener('mousemove', e => {
+      if (drawing) {
+        ctx.lineTo(e.offsetX, e.offsetY);
+        ctx.stroke();
+      }
+    });
+
+    canvas.addEventListener('mouseup', () => drawing = false);
+    canvas.addEventListener('mouseout', () => drawing = false);
 
     function clearSignature() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
 
-    function submitSignature() {
-      const signatureData = canvas.toDataURL();
-      alert('Signature captured ✅ (future: send to backend).');
-      // Future: POST signatureData to /api/signature with tracking numbers + driver info
-    }
+    fetchParcels();
   </script>
 </body>
 </html>
