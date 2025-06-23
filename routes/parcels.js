@@ -1,10 +1,22 @@
 const express = require('express');
 const router = express.Router();
 const { createClient } = require('@supabase/supabase-js');
+const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
+const streamifier = require('streamifier');
 require('dotenv').config();
 
 // Supabase connection
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+const upload = multer();
 
 // 🔁 GET all parcels (for dashboard or reporting)
 router.get('/', async (req, res) => {
@@ -71,19 +83,6 @@ router.put('/:tracking_number/scanout', async (req, res) => {
 });
 
 // ✅ POD Upload route — upload image + update parcel
-const multer = require('multer');
-const cloudinary = require('cloudinary').v2;
-const streamifier = require('streamifier');
-
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-const upload = multer();
-
 router.post('/pod', upload.single('image'), async (req, res) => {
   const { tracking_number, received_by, delivered_at_time } = req.body;
   const file = req.file;
