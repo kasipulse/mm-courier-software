@@ -11,6 +11,7 @@
     }
     h1 {
       color: #222;
+      text-align: center;
     }
     table {
       border-collapse: collapse;
@@ -30,11 +31,25 @@
     tr:nth-child(even) {
       background-color: #f9f9f9;
     }
+    .logo {
+      display: block;
+      margin: 0 auto;
+      height: 80px;
+    }
   </style>
 </head>
 <body>
+
+  <!-- Company Logo -->
+  <img
+    src="https://res.cloudinary.com/dwxgkbuln/image/upload/v1750675472/pakisa_logistics_express_pty_ltd_logo-removebg-preview_kbuvzs.png"
+    alt="MM Courier Logo"
+    class="logo"
+  >
+
   <h1>📦 MM Courier Parcel Dashboard</h1>
 
+  <!-- Parcel Table -->
   <table id="parcelsTable">
     <thead>
       <tr>
@@ -47,7 +62,7 @@
       </tr>
     </thead>
     <tbody>
-      <!-- Parcel rows will go here -->
+      <!-- Rows will be injected by JavaScript -->
     </tbody>
   </table>
 
@@ -89,5 +104,6 @@
 
     loadParcels();
   </script>
+
 </body>
 </html>
