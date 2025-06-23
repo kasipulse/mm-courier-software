@@ -1,155 +1,178 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Tripsheet - MM Courier</title>
+  <meta charset="UTF-8">
+  <title>MM Courier | Trip Sheet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
+    :root {
+      --gold: #cebd80;
+      --navy: #0a2b52;
+      --blue: #409dbc;
+      --white: #ffffff;
+    }
+
     body {
       font-family: Arial, sans-serif;
-      margin: 20px;
-      background: #f4f4f4;
+      background-color: var(--white);
+      color: var(--navy);
+      margin: 0;
+      padding: 0;
     }
+
     header {
+      background-color: var(--navy);
+      color: var(--white);
+      padding: 20px;
       text-align: center;
-      border-bottom: 2px solid #000;
-      padding-bottom: 10px;
-      margin-bottom: 20px;
     }
+
     header img {
-      max-height: 80px;
+      height: 60px;
+      margin-bottom: 10px;
     }
-    .contact {
+
+    .company-info {
       font-size: 14px;
-      margin-top: 10px;
+      margin-top: 5px;
     }
+
+    .container {
+      padding: 20px;
+      max-width: 900px;
+      margin: auto;
+    }
+
     h2 {
-      text-align: center;
+      color: var(--navy);
+      margin-top: 0;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      background: #fff;
-      margin-bottom: 30px;
+      margin-top: 20px;
+      font-size: 14px;
     }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 10px;
-      text-align: left;
+
+    table, th, td {
+      border: 1px solid var(--blue);
     }
+
     th {
-      background: #eee;
-    }
-    #signature-pad {
-      border: 1px solid #ccc;
-      background: #fff;
-      height: 150px;
-      width: 100%;
-    }
-    button {
+      background-color: var(--blue);
+      color: white;
       padding: 10px;
-      margin-top: 10px;
+    }
+
+    td {
+      padding: 8px;
+      text-align: center;
+    }
+
+    .logout-btn {
+      float: right;
+      margin-top: -50px;
+      background-color: var(--gold);
+      color: var(--navy);
+      border: none;
+      padding: 8px 12px;
       cursor: pointer;
+      font-weight: bold;
+    }
+
+    .logout-btn:hover {
+      background-color: #e3d49b;
     }
   </style>
 </head>
 <body>
-  <header>
-    <img src="https://res.cloudinary.com/dwxgkbuln/image/upload/v1750675472/pakisa_logistics_express_pty_ltd_logo-removebg-preview_kbuvzs.png" alt="Pakisa Logo" />
-    <div class="contact">
-      <strong>Pakisa Logistics Express (Pty) Ltd</strong><br>
-      10 Burry Koean Street, Jet Park, Boksburg, 1469<br>
-      Email: ops1@pakisalogistics.co.za | Tel: 011 397 1151<br>
-      Website: www.pakisalogistics.co.za
-    </div>
-  </header>
 
-  <h2>Driver Tripsheet</h2>
-  <p><strong>Driver:</strong> <span id="driver-name"></span></p>
+<script>
+  // Redirect to login if not authenticated
+  if (localStorage.getItem('mmcourier_loggedin') !== 'true') {
+    window.location.href = '/login.html';
+  }
 
-  <table id="parcels-table">
+  // Load driver name
+  const driverName = localStorage.getItem('mmcourier_driver') || 'Driver';
+</script>
+
+<header>
+  <img src="https://res.cloudinary.com/dwxgkbuln/image/upload/v1750675472/pakisa_logistics_express_pty_ltd_logo-removebg-preview_kbuvzs.png" alt="MM Courier Logo">
+  <div class="company-info">
+    <strong>Pakisa Logistics Express (Pty) Ltd</strong><br>
+    10 Burry Koean Street, Jet Park, Boksburg, 1469<br>
+    Website: <a href="https://www.pakisalogistics.co.za" style="color: #cebd80;">www.pakisalogistics.co.za</a> |
+    Email: ops1@pakisalogistics.co.za |
+    Tel: 011 397 1151
+  </div>
+</header>
+
+<div class="container">
+  <button class="logout-btn" onclick="logout()">Logout</button>
+  <h2>Trip Sheet for <span id="driverName">...</span></h2>
+
+  <table id="tripSheetTable">
     <thead>
       <tr>
-        <th>Tracking Number</th>
-        <th>Content</th>
+        <th>Waybill</th>
+        <th>Tracking #</th>
         <th>Customer</th>
-        <th>Address</th>
+        <th>Content</th>
         <th>Status</th>
+        <th>Received Date</th>
       </tr>
     </thead>
     <tbody>
-      <!-- Filled by JS -->
+      <!-- Populated by JS -->
     </tbody>
   </table>
+</div>
 
-  <button id="optimize-route">🗺 Optimize Route in Google Maps</button>
+<script>
+  document.getElementById('driverName').textContent = driverName;
 
-  <h3>Driver Signature (Sign-on-Glass)</h3>
-  <canvas id="signature-pad"></canvas>
-  <button onclick="clearSignature()">Clear Signature</button>
-
-  <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const driver = urlParams.get('driver') || 'Unknown';
-    document.getElementById('driver-name').textContent = driver;
-
-    async function fetchParcels() {
+  async function fetchTrips() {
+    try {
       const res = await fetch('/api/parcels');
       const parcels = await res.json();
-      const table = document.querySelector('#parcels-table tbody');
+      const tableBody = document.querySelector('#tripSheetTable tbody');
+      tableBody.innerHTML = '';
 
-      const assigned = parcels.filter(p => p.driver_name === driver && p.status === 'Scanned Out');
-      assigned.forEach(p => {
-        const row = document.createElement('tr');
+      const assigned = parcels.filter(p => p.driver_name === driverName);
+
+      if (assigned.length === 0) {
+        const row = tableBody.insertRow();
+        const cell = row.insertCell();
+        cell.colSpan = 6;
+        cell.textContent = 'No parcels assigned.';
+      }
+
+      assigned.forEach(parcel => {
+        const row = tableBody.insertRow();
         row.innerHTML = `
-          <td>${p.tracking_number}</td>
-          <td>${p.content || ''}</td>
-          <td>${p.customer || ''}</td>
-          <td>${p.delivery_address || ''}</td>
-          <td>${p.status}</td>
+          <td>${parcel.waybill_number || '-'}</td>
+          <td>${parcel.tracking_number}</td>
+          <td>${parcel.customer || '-'}</td>
+          <td>${parcel.content || '-'}</td>
+          <td>${parcel.status}</td>
+          <td>${parcel.received_date ? parcel.received_date.slice(0, 10) : '-'}</td>
         `;
-        table.appendChild(row);
       });
+    } catch (err) {
+      console.error('Failed to fetch trip sheet', err);
     }
+  }
 
-    // Route optimization via Google Maps
-    document.getElementById('optimize-route').addEventListener('click', () => {
-      const rows = document.querySelectorAll('#parcels-table tbody tr');
-      const addresses = Array.from(rows).map(row => row.cells[3].textContent).filter(Boolean);
-      if (addresses.length < 2) {
-        alert('Need at least 2 addresses to optimize.');
-        return;
-      }
+  function logout() {
+    localStorage.removeItem('mmcourier_loggedin');
+    localStorage.removeItem('mmcourier_driver');
+    window.location.href = '/login.html';
+  }
 
-      const base = 'https://www.google.com/maps/dir/';
-      const route = addresses.map(a => encodeURIComponent(a)).join('/');
-      window.open(base + route, '_blank');
-    });
+  fetchTrips();
+</script>
 
-    // Signature Pad
-    const canvas = document.getElementById('signature-pad');
-    const ctx = canvas.getContext('2d');
-    let drawing = false;
-
-    canvas.addEventListener('mousedown', e => {
-      drawing = true;
-      ctx.moveTo(e.offsetX, e.offsetY);
-    });
-
-    canvas.addEventListener('mousemove', e => {
-      if (drawing) {
-        ctx.lineTo(e.offsetX, e.offsetY);
-        ctx.stroke();
-      }
-    });
-
-    canvas.addEventListener('mouseup', () => drawing = false);
-    canvas.addEventListener('mouseout', () => drawing = false);
-
-    function clearSignature() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
-
-    fetchParcels();
-  </script>
 </body>
 </html>
