@@ -2,64 +2,138 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>MM Courier - Driver Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MM Courier Login</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 40px; background: #f0f0f0; }
-    form { max-width: 400px; margin: auto; background: #fff; padding: 30px; border-radius: 8px; }
-    label, input, button { display: block; width: 100%; margin-top: 10px; }
-    button { padding: 10px; background-color: #0077cc; color: white; border: none; cursor: pointer; }
-    button:hover { background-color: #005fa3; }
-    #message { margin-top: 15px; }
+    body {
+      background: #f5f5f5;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 400px;
+      margin: 80px auto;
+      padding: 30px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      border-top: 8px solid #cebd80;
+    }
+
+    h1 {
+      text-align: center;
+      color: #0a2b52;
+    }
+
+    label {
+      display: block;
+      margin-top: 20px;
+      font-weight: bold;
+      color: #0a2b52;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #409dbc;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      margin-top: 25px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #317c99;
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .logo img {
+      max-width: 120px;
+    }
+
+    .message {
+      margin-top: 20px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .error {
+      color: red;
+    }
+
+    .success {
+      color: green;
+    }
   </style>
 </head>
 <body>
-  <h2 style="text-align:center;">Driver Login</h2>
-  <form id="loginForm">
-    <label for="username">Username:</label>
-    <input id="username" name="username" required />
-    <label for="password">Password:</label>
-    <input id="password" name="password" type="password" required />
-    <button type="submit">Login</button>
-  </form>
-  <div id="message"></div>
+  <div class="container">
+    <div class="logo">
+      <img src="https://res.cloudinary.com/dwxgkbuln/image/upload/v1750675472/pakisa_logistics_express_pty_ltd_logo-removebg-preview_kbuvzs.png" alt="MM Courier Logo" />
+    </div>
+    <h1>Driver Login</h1>
+    <form id="loginForm">
+      <label for="username">Username</label>
+      <input type="text" name="username" required />
+
+      <label for="password">Password</label>
+      <input type="password" name="password" required />
+
+      <button type="submit">Login</button>
+    </form>
+    <div id="message" class="message"></div>
+  </div>
 
   <script>
     const form = document.getElementById('loginForm');
-    const messageDiv = document.getElementById('message');
+    const message = document.getElementById('message');
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const username = form.username.value.trim();
-      const password = form.password.value;
+      const formData = new FormData(form);
+      const data = {
+        username: formData.get('username'),
+        password: formData.get('password')
+      };
 
       try {
         const res = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password }),
+          body: JSON.stringify(data)
         });
 
-        const data = await res.json();
+        const result = await res.json();
 
-        if (res.ok) {
-          messageDiv.textContent = '✅ Login successful!';
-          messageDiv.style.color = 'green';
-
-          // Store token if you implement JWT or session
-          // localStorage.setItem('token', data.token);
-
-          // Redirect to tripsheet page or dashboard
-          setTimeout(() => {
-            window.location.href = '/tripsheet.html';
-          }, 1000);
+        if (result.success) {
+          message.textContent = '✅ Login successful!';
+          message.className = 'message success';
+          // Redirect to dashboard or tripsheet
+          window.location.href = '/tripsheet.html';
         } else {
-          messageDiv.textContent = `❌ ${data.message}`;
-          messageDiv.style.color = 'red';
+          message.textContent = `❌ ${result.message}`;
+          message.className = 'message error';
         }
       } catch (err) {
-        messageDiv.textContent = '❌ Login failed. Please try again.';
-        messageDiv.style.color = 'red';
+        message.textContent = '❌ Login failed. Try again.';
+        message.className = 'message error';
       }
     });
   </script>
