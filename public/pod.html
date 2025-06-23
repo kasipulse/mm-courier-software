@@ -1,1 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>POD Upload | MM Courier</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 30px; background: #f9f9f9; }
+    h1 { text-align: center; }
+    form { max-width: 500px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; }
+    label { display: block; margin-top: 15px; }
+    input, button { width: 100%; padding: 10px; margin-top: 5px; }
+    #result { margin-top: 20px; text-align: center; font-weight: bold; }
+    .success { color: green; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+  <h1>📦 POD Upload</h1>
+  <form id="podForm">
+    <label>Tracking Number</label>
+    <input type="text" name="tracking_number" required>
 
+    <label>Received By</label>
+    <input type="text" name="received_by" required>
+
+    <label>POD Image (photo)</label>
+    <input type="file" name="image" accept="image/*" required>
+
+    <button type="submit">Upload POD</button>
+  </form>
+
+  <div id="result"></div>
+
+  <script>
+    const form = document.getElementById('podForm');
+    const result = document.getElementById('result');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+
+      try {
+        const res = await fetch('/api/parcels/pod', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          result.textContent = '✅ POD uploaded successfully!';
+          result.className = 'success';
+          form.reset();
+        } else {
+          result.textContent = `❌ ${data.message}`;
+          result.className = 'error';
+        }
+      } catch (err) {
+        result.textContent = '❌ Upload failed. Please try again.';
+        result.className = 'error';
+      }
+    });
+  </script>
+</body>
+</html>
