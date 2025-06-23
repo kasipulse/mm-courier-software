@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tripsheet | MM Courier</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4; }
+    header { text-align: center; margin-bottom: 20px; }
+    img.logo { max-width: 200px; }
+    h1 { margin: 5px 0; }
+    form, .tripsheet { max-width: 700px; margin: auto; background: white; padding: 20px; border-radius: 8px; }
+    label { display: block; margin-top: 15px; }
+    input, button { padding: 10px; width: 100%; margin-top: 5px; }
+    .parcels { margin-top: 20px; }
+    canvas { border: 1px solid #000; width: 100%; height: 150px; margin-top: 10px; }
+    .actions { margin-top: 20px; text-align: center; }
+    .info { font-size: 14px; color: gray; text-align: center; margin-top: 30px; }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="https://res.cloudinary.com/dwxgkbuln/image/upload/v1750675472/pakisa_logistics_express_pty_ltd_logo-removebg-preview_kbuvzs.png" class="logo" alt="Logo" />
+    <h1>MM Courier Tripsheet</h1>
+    <div class="info">
+      10 Burry Koean Street, Jet Park, Boksburg, 1469<br>
+      📞 011 397 1151 | 🌐 www.pakisalogistics.co.za | ✉️ ops1@pakisalogistics.co.za
+    </div>
+  </header>
+
+  <form id="loginForm">
+    <label>Driver Name</label>
+    <input type="text" id="driverName" required>
+    <button type="submit">View My Tripsheet</button>
+  </form>
+
+  <div class="tripsheet" style="display: none;" id="tripsheetSection">
+    <h2>Your Parcels</h2>
+    <ul id="parcelList" class="parcels"></ul>
+
+    <div class="actions">
+      <a id="mapLink" href="#" target="_blank">🗺️ Open Route in Google Maps</a>
+    </div>
+
+    <h3>Sign on Glass</h3>
+    <canvas id="signatureCanvas"></canvas>
+    <button onclick="clearSignature()">Clear Signature</button>
+    <button onclick="submitSignature()">Submit Signature</button>
+  </div>
+
+  <script>
+    const loginForm = document.getElementById('loginForm');
+    const tripsheetSection = document.getElementById('tripsheetSection');
+    const parcelList = document.getElementById('parcelList');
+    const mapLink = document.getElementById('mapLink');
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const driver = document.getElementById('driverName').value.trim();
+
+      const res = await fetch('/api/parcels');
+      const parcels = await res.json();
+
+      const driverParcels = parcels.filter(p => p.driver_name?.toLowerCase() === driver.toLowerCase());
+
+      if (driverParcels.length === 0) {
+        alert('No parcels assigned to this driver.');
+        return;
+      }
+
+      tripsheetSection.style.display = 'block';
+      parcelList.innerHTML = '';
+      const stops = [];
+
+      driverParcels.forEach(p => {
+        parcelList.innerHTML += `<li><strong>${p.tracking_number}</strong> - ${p.customer} (${p.address})</li>`;
+        stops.push(encodeURIComponent(p.address));
+      });
+
+      // Google Maps multi-stop route
+      const base = 'https://www.google.com/maps/dir/';
+      const fullRoute = base + stops.join('/');
+      mapLink.href = fullRoute;
+    });
+
+    // Sign-on-glass functions
+    const canvas = document.getElementById('signatureCanvas');
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+
+    canvas.addEventListener('mousedown', () => drawing = true);
+    canvas.addEventListener('mouseup', () => drawing = false);
+    canvas.addEventListener('mouseout', () => drawing = false);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('touchstart', () => drawing = true);
+    canvas.addEventListener('touchend', () => drawing = false);
+    canvas.addEventListener('touchcancel', () => drawing = false);
+    canvas.addEventListener('touchmove', (e) => {
+      const touch = e.touches[0];
+      draw({ offsetX: touch.clientX - canvas.offsetLeft, offsetY: touch.clientY - canvas.offsetTop });
+    });
+
+    function draw(e) {
+      if (!drawing) return;
+      const x = e.offsetX;
+      const y = e.offsetY;
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#000';
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+    }
+
+    function clearSignature() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function submitSignature() {
+      const signatureData = canvas.toDataURL();
+      alert('Signature captured ✅ (future: send to backend).');
+      // Future: POST signatureData to /api/signature with tracking numbers + driver info
+    }
+  </script>
+</body>
+</html>
