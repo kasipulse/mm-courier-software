@@ -1,32 +1,27 @@
-const path = require('path');
-
-// Serve static files from /public
-app.use(express.static(path.join(__dirname, 'public')));
-
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const parcelRoutes = require('./routes/parcels'); // ✅ this line
+const parcelRoutes = require('./routes/parcels'); // ✅ routes
 
 dotenv.config();
 
-const app = express();
+const app = express(); // ✅ initialize app FIRST
 app.use(cors());
 app.use(express.json());
 
-// ✅ serve static frontend files from /public
+// ✅ Serve static files from "public" folder
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ✅ connect parcels API
-app.use('/api/parcels', parcelRoutes); // ✅ this line
+// ✅ API routes
+app.use('/api/parcels', parcelRoutes);
 
-// health check
+// ✅ Health check
 app.get('/', (req, res) => {
   res.send('📦 MM Courier API is live');
 });
 
-// start server
+// ✅ Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
