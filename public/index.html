@@ -2,148 +2,94 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Dashboard | MM Courier</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Welcome | MM Courier</title>
+  <link rel="stylesheet" href="styles.css" />
   <style>
-    :root {
-      --gold: #cebd80;
-      --navy: #0a2b52;
-      --sky: #409dbc;
-      --white: #ffffff;
-    }
-
-    * {
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f6f8;
       margin: 0;
       padding: 0;
-      box-sizing: border-box;
     }
-
-    body {
-      font-family: 'Segoe UI', sans-serif;
+    header {
+      background-color: #0a2b52;
+      color: white;
+      padding: 1rem 2rem;
       display: flex;
-      height: 100vh;
-      overflow: hidden;
-      background-color: var(--white);
-    }
-
-    /* Sidebar */
-    .sidebar {
-      width: 220px;
-      background-color: var(--navy);
-      color: var(--white);
-      display: flex;
-      flex-direction: column;
-      padding: 20px 0;
-    }
-
-    .sidebar h2 {
-      text-align: center;
-      margin-bottom: 20px;
-      color: var(--gold);
-    }
-
-    .sidebar a {
-      color: var(--white);
-      text-decoration: none;
-      padding: 10px 20px;
-      display: block;
-      transition: background 0.2s ease-in-out;
-    }
-
-    .sidebar a:hover,
-    .sidebar a.active {
-      background-color: var(--sky);
-    }
-
-    /* Main content */
-    .main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .topbar {
-      background-color: var(--white);
-      padding: 15px 25px;
-      border-bottom: 1px solid #ccc;
-      display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
     }
-
-    .topbar h1 {
-      color: var(--navy);
-    }
-
-    .content {
-      padding: 30px;
-      overflow-y: auto;
-    }
-
-    .card {
-      background: var(--white);
-      border: 1px solid #ccc;
-      border-left: 5px solid var(--sky);
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-
-    .card h3 {
-      margin-bottom: 10px;
-      color: var(--navy);
-    }
-
-    .logo {
+    header img {
       height: 50px;
-      margin-left: 10px;
     }
-
-    .sidebar img {
+    .container {
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+    h1 {
+      color: #0a2b52;
+      margin-bottom: 0.5rem;
+    }
+    p {
+      color: #555;
+      margin-bottom: 2rem;
+    }
+    .tiles {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+      max-width: 900px;
+      margin: auto;
+    }
+    .tile {
+      background-color: white;
+      border: 2px solid #cebd80;
+      border-radius: 10px;
+      padding: 2rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .tile:hover {
+      background-color: #409dbc;
+      color: white;
+      border-color: #0a2b52;
+    }
+    .tile a {
+      text-decoration: none;
+      color: inherit;
       display: block;
-      margin: 0 auto 20px;
-      height: 60px;
+      font-weight: bold;
+    }
+    footer {
+      margin-top: 4rem;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #777;
     }
   </style>
 </head>
 <body>
-  <div class="sidebar">
-    <img src="https://res.cloudinary.com/dwxgkbuln/image/upload/v1750675472/pakisa_logistics_express_pty_ltd_logo-removebg-preview_kbuvzs.png" alt="Logo">
+  <header>
+    <img src="https://res.cloudinary.com/dwxgkbuln/image/upload/v1750675472/pakisa_logistics_express_pty_ltd_logo-removebg-preview_kbuvzs.png" alt="MM Courier Logo" />
     <h2>MM Courier</h2>
-    <a href="dashboard.html" class="active">📊 Dashboard</a>
-    <a href="daily-report.html">📦 Daily Deliveries</a>
-    <a href="age-analysis.html">⏳ Age Analysis</a>
-    <a href="scan-exceptions.html">⚠️ Scan Exceptions</a>
-    <a href="driver-performance.html">🚚 Driver Performance</a>
-    <a href="client-report.html">👥 Client Report</a>
-    <a href="pod-compliance.html">📝 POD Compliance</a>
-    <a href="billing-summary.html">💰 Billing Summary</a>
-    <a href="tripsheet-summary.html">🗂 Trip Sheet Summary</a>
-    <a href="index.html">🔒 Logout</a>
+  </header>
+
+  <div class="container">
+    <h1>Welcome to MM Courier</h1>
+    <p>Your all-in-one courier management dashboard</p>
+
+    <div class="tiles">
+      <div class="tile"><a href="dashboard.html">📊 Admin Dashboard</a></div>
+      <div class="tile"><a href="tripsheet.html">🚚 View Trip Sheets</a></div>
+      <div class="tile"><a href="scanin.html">📦 Scan Parcels</a></div>
+      <div class="tile"><a href="driver-login.html">🧍 Driver Login</a></div>
+    </div>
   </div>
 
-  <div class="main">
-    <div class="topbar">
-      <h1>Welcome, Admin</h1>
-    </div>
-    <div class="content">
-      <div class="card">
-        <h3>Today’s Deliveries</h3>
-        <p>Total: --</p>
-      </div>
-      <div class="card">
-        <h3>Outstanding Parcels</h3>
-        <p>Total: --</p>
-      </div>
-      <div class="card">
-        <h3>Scan Exceptions</h3>
-        <p>Total: --</p>
-      </div>
-      <div class="card">
-        <h3>Driver Compliance</h3>
-        <p>Updated: --</p>
-      </div>
-    </div>
-  </div>
+  <footer>
+    &copy; 2025 MM Courier | Powered by Pakisa Logistics | ops1@pakisalogistics.co.za | 011 397 1151
+  </footer>
 </body>
 </html>
