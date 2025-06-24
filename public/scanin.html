@@ -10,6 +10,8 @@
     #reader { width: 100%; margin: 20px auto; max-width: 400px; }
     input, button { padding: 10px; width: 100%; margin-top: 10px; }
     .message { text-align: center; font-weight: bold; margin-top: 15px; }
+    .controls { display: flex; gap: 10px; margin-top: 10px; }
+    .controls button { flex: 1; }
   </style>
 </head>
 <body>
@@ -17,17 +19,45 @@
   
   <div id="reader"></div>
   <input type="text" id="trackingNumber" placeholder="Tracking Number" readonly />
-  <button onclick="scanParcel()">✅ Scan In</button>
+
+  <div class="controls">
+    <button onclick="scanParcel()">✅ Scan In</button>
+    <button onclick="clearInput()">🧹 Clear</button>
+  </div>
+  <button onclick="stopScanner()">⛔ Stop Scanning</button>
 
   <div class="message" id="message"></div>
 
   <script>
+    let html5QrCode;
+    let isScanning = false;
+
     const message = document.getElementById('message');
+    const input = document.getElementById('trackingNumber');
+
+    function startScanner() {
+      html5QrCode = new Html5Qrcode("reader");
+      Html5Qrcode.getCameras().then(cameras => {
+        if (cameras && cameras.length) {
+          html5QrCode.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: 250 },
+            qrCodeMessage => {
+              input.value = qrCodeMessage;
+              message.textContent = "✅ Scanned! You may now submit.";
+            }
+          );
+          isScanning = true;
+        } else {
+          message.textContent = "⚠️ No camera found.";
+        }
+      });
+    }
 
     function scanParcel() {
-      const trackingNumber = document.getElementById('trackingNumber').value;
+      const trackingNumber = input.value.trim();
       if (!trackingNumber) {
-        message.textContent = '⚠️ No tracking number scanned.';
+        message.textContent = '⚠️ No tracking number.';
         return;
       }
 
@@ -38,6 +68,7 @@
       .then(data => {
         if (data.success) {
           message.textContent = '✅ Parcel scanned in successfully!';
+          input.value = '';
         } else {
           message.textContent = `❌ ${data.message}`;
         }
@@ -47,19 +78,25 @@
       });
     }
 
-    const html5QrCode = new Html5Qrcode("reader");
-    Html5Qrcode.getCameras().then(cameras => {
-      if (cameras && cameras.length) {
-        html5QrCode.start(
-          { facingMode: "environment" }, // Rear camera
-          { fps: 10, qrbox: 250 },
-          qrCodeMessage => {
-            document.getElementById("trackingNumber").value = qrCodeMessage;
-            html5QrCode.stop(); // optional: auto-stop after first scan
-          }
-        );
+    function clearInput() {
+      input.value = '';
+      message.textContent = '';
+    }
+
+    function stopScanner() {
+      if (html5QrCode && isScanning) {
+        html5QrCode.stop().then(() => {
+          document.getElementById("reader").innerHTML = '';
+          message.textContent = '🛑 Scanner stopped.';
+          isScanning = false;
+        }).catch(err => {
+          message.textContent = '⚠️ Failed to stop scanner.';
+        });
       }
-    });
+    }
+
+    // start scanning on load
+    window.onload = startScanner;
   </script>
 </body>
 </html>
