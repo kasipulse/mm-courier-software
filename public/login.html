@@ -1,139 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>MM Courier Login</title>
-  <style>
-    body {
-      background: #f5f5f5;
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-
-    .container {
-      max-width: 400px;
-      margin: 80px auto;
-      padding: 30px;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      border-top: 8px solid #cebd80;
-    }
-
-    h1 {
-      text-align: center;
-      color: #0a2b52;
-    }
-
-    label {
-      display: block;
-      margin-top: 20px;
-      font-weight: bold;
-      color: #0a2b52;
-    }
-
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-    }
-
-    button {
-      width: 100%;
-      padding: 12px;
-      background: #409dbc;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      font-weight: bold;
-      margin-top: 25px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #317c99;
-    }
-
-    .logo {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    .logo img {
-      max-width: 120px;
-    }
-
-    .message {
-      margin-top: 20px;
-      text-align: center;
-      font-weight: bold;
-    }
-
-    .error {
-      color: red;
-    }
-
-    .success {
-      color: green;
-    }
-  </style>
+<meta charset="UTF-8" />
+<title>Login | MM Courier</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #f9f9f9; display: flex; justify-content: center; align-items: center; height: 100vh; }
+  form { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 0 10px #aaa; width: 300px; }
+  label, input, button { width: 100%; margin-bottom: 1rem; }
+  input, button { padding: 0.5rem; font-size: 1rem; }
+</style>
 </head>
 <body>
-  <div class="container">
-    <div class="logo">
-      <img src="https://res.cloudinary.com/dwxgkbuln/image/upload/v1750675472/pakisa_logistics_express_pty_ltd_logo-removebg-preview_kbuvzs.png" alt="MM Courier Logo" />
-    </div>
-    <h1>Driver Login</h1>
-    <form id="loginForm">
-      <label for="username">Username</label>
-      <input type="text" name="username" required />
-
-      <label for="password">Password</label>
-      <input type="password" name="password" required />
-
-      <button type="submit">Login</button>
-    </form>
-    <div id="message" class="message"></div>
-  </div>
+  <form id="loginForm">
+    <label for="username">Username</label>
+    <input id="username" type="text" required />
+    <label for="password">Password</label>
+    <input id="password" type="password" required />
+    <button type="submit">Login</button>
+    <p id="error" style="color:red; display:none;">Invalid credentials</p>
+  </form>
 
   <script>
     const form = document.getElementById('loginForm');
-    const message = document.getElementById('message');
-
-    form.addEventListener('submit', async (e) => {
+    const error = document.getElementById('error');
+    form.addEventListener('submit', e => {
       e.preventDefault();
+      const username = form.username.value.trim();
+      const password = form.password.value.trim();
 
-      const formData = new FormData(form);
-      const data = {
-        username: formData.get('username'),
-        password: formData.get('password')
+      // Simple hardcoded users (replace with real auth later)
+      const users = {
+        'jm001': 'password123',
+        'ka001': 'password123',
+        'mp001': 'password123'
+        // Add all your users here
       };
 
-      try {
-        const res = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-
-        const result = await res.json();
-
-        if (result.success) {
-          message.textContent = '✅ Login successful!';
-          message.className = 'message success';
-          // Redirect to dashboard or tripsheet
-          window.location.href = '/tripsheet.html';
-        } else {
-          message.textContent = `❌ ${result.message}`;
-          message.className = 'message error';
-        }
-      } catch (err) {
-        message.textContent = '❌ Login failed. Try again.';
-        message.className = 'message error';
+      if (users[username] && users[username] === password) {
+        localStorage.setItem('mmcourier_user', username);
+        window.location.href = 'dashboard.html';
+      } else {
+        error.style.display = 'block';
       }
     });
   </script>
