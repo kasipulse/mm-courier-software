@@ -1,48 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Login | MM Courier</title>
-<style>
-  body { font-family: Arial, sans-serif; background: #f9f9f9; display: flex; justify-content: center; align-items: center; height: 100vh; }
-  form { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 0 10px #aaa; width: 300px; }
-  label, input, button { width: 100%; margin-bottom: 1rem; }
-  input, button { padding: 0.5rem; font-size: 1rem; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Driver Login | MM Courier</title>
+  <style>
+    :root {
+      --primary: #0a2b52;
+      --accent: #409dbc;
+      --highlight: #cebd80;
+      --light: #ffffff;
+      --bg: #f4f4f4;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .login-container {
+      background-color: var(--light);
+      padding: 30px 25px;
+      border-radius: 8px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login-container h2 {
+      color: var(--primary);
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 25px;
+      background-color: var(--accent);
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background-color: var(--primary);
+    }
+
+    .footer-text {
+      text-align: center;
+      font-size: 0.9em;
+      color: #777;
+      margin-top: 15px;
+    }
+
+    @media screen and (max-width: 480px) {
+      .login-container {
+        margin: 0 15px;
+        padding: 25px 20px;
+      }
+
+      button {
+        padding: 14px;
+      }
+    }
+  </style>
 </head>
 <body>
-  <form id="loginForm">
-    <label for="username">Username</label>
-    <input id="username" type="text" required />
-    <label for="password">Password</label>
-    <input id="password" type="password" required />
-    <button type="submit">Login</button>
-    <p id="error" style="color:red; display:none;">Invalid credentials</p>
-  </form>
+  <div class="login-container">
+    <h2>Driver Login</h2>
+    <form method="POST" action="/api/auth/login">
+      <label for="username">Username</label>
+      <input type="text" name="username" id="username" required />
 
-  <script>
-    const form = document.getElementById('loginForm');
-    const error = document.getElementById('error');
-    form.addEventListener('submit', e => {
-      e.preventDefault();
-      const username = form.username.value.trim();
-      const password = form.password.value.trim();
+      <label for="password">Password</label>
+      <input type="password" name="password" id="password" required />
 
-      // Simple hardcoded users (replace with real auth later)
-      const users = {
-        'jm001': 'password123',
-        'ka001': 'password123',
-        'mp001': 'password123'
-        // Add all your users here
-      };
-
-      if (users[username] && users[username] === password) {
-        localStorage.setItem('mmcourier_user', username);
-        window.location.href = 'dashboard.html';
-      } else {
-        error.style.display = 'block';
-      }
-    });
-  </script>
+      <button type="submit">Sign In</button>
+    </form>
+    <p class="footer-text">© MM Courier | Powered by Pakisa Logistics</p>
+  </div>
 </body>
 </html>
