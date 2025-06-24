@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Trip Sheet Summary | MM Courier</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <style>
+    :root {
+      --primary: #0a2b52;
+      --accent: #409dbc;
+      --highlight: #cebd80;
+      --bg: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      display: flex;
+      background: var(--bg);
+    }
+
+    .sidebar {
+      width: 250px;
+      background: var(--primary);
+      color: #fff;
+      height: 100vh;
+      padding: 20px;
+      position: fixed;
+    }
+
+    .sidebar h2 {
+      font-size: 1.5em;
+      margin-bottom: 30px;
+    }
+
+    .sidebar a {
+      display: block;
+      padding: 12px;
+      margin-bottom: 10px;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+
+    .sidebar a:hover {
+      background: var(--accent);
+    }
+
+    .main {
+      margin-left: 250px;
+      padding: 30px;
+      flex: 1;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--highlight);
+      padding: 10px 20px;
+      border-radius: 6px;
+      margin-bottom: 30px;
+    }
+
+    .toggle-btn {
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      font-size: 1.2em;
+      color: #000;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+    }
+
+    .logo img {
+      height: 40px;
+      margin-right: 10px;
+    }
+
+    h1 {
+      color: var(--primary);
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background: var(--accent);
+      color: white;
+    }
+
+    tr:nth-child(even) {
+      background: #f2f2f2;
+    }
+
+    .no-data {
+      margin-top: 20px;
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h2>MM Courier</h2>
+    <a href="dashboard.html">📊 Dashboard</a>
+    <a href="age-report.html">📅 Age Analysis</a>
+    <a href="daily-report.html">🚚 Daily Deliveries</a>
+    <a href="exceptions-report.html">⚠️ Scan Exceptions</a>
+    <a href="driver-performance.html">🧑‍✈️ Driver Performance</a>
+    <a href="client-report.html">🏢 Client Delivery</a>
+    <a href="pod-compliance.html">🖊 POD Compliance</a>
+    <a href="billing-summary.html">💰 Billing Summary</a>
+    <a href="tripsheet-summary.html">📋 Trip Sheet Summary</a>
+    <a href="index.html">🏠 Home</a>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+      <div class="logo">
+        <img src="https://res.cloudinary.com/dwxgkbuln/image/upload/v1750675472/pakisa_logistics_express_pty_ltd_logo-removebg-preview_kbuvzs.png" alt="Logo" />
+        <strong>Trip Sheet Summary</strong>
+      </div>
+    </div>
+
+    <h1>📋 Trip Sheet Summary</h1>
+    <table id="tripTable">
+      <thead>
+        <tr>
+          <th>Driver Name</th>
+          <th>Parcels Assigned</th>
+          <th>Last Assignment</th>
+        </tr>
+      </thead>
+      <tbody id="tripBody"></tbody>
+    </table>
+    <p class="no-data" id="noData" style="display: none;">No scanned out parcels found.</p>
+  </div>
+
+  <script>
+    function toggleSidebar() {
+      document.querySelector('.sidebar').cl
