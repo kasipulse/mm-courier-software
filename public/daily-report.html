@@ -1,169 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Daily Report | MM Courier</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-    }
-
-    header {
-      background-color: #0a2b52;
-      color: white;
-      padding: 15px 20px;
-      text-align: left;
-    }
-
-    .sidebar {
-      width: 220px;
-      background-color: #409dbc;
-      height: 100vh;
-      position: fixed;
-      top: 60px;
-      left: 0;
-      padding-top: 20px;
-    }
-
-    .sidebar a {
-      display: block;
-      color: white;
-      padding: 12px 20px;
-      text-decoration: none;
-    }
-
-    .sidebar a:hover {
-      background-color: #cebd80;
-      color: black;
-    }
-
-    main {
-      margin-left: 240px;
-      padding: 20px;
-    }
-
-    h2 {
-      color: #0a2b52;
-    }
-
-    .filter-form label {
-      margin-right: 15px;
-    }
-
-    .filter-form input,
-    .filter-form select {
-      margin-right: 10px;
-      padding: 5px;
-    }
-
-    .actions {
-      margin-top: 15px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 25px;
-      background-color: white;
-    }
-
-    th, td {
-      border: 1px solid #ddd;
-      padding: 10px;
-      text-align: left;
-    }
-
-    th {
-      background-color: #cebd80;
-    }
-
-    .btn {
-      padding: 10px 15px;
-      margin: 5px;
-      background-color: #0a2b52;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-
-    .btn:hover {
-      background-color: #409dbc;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <title>Daily Deliveries Report | MM Courier</title>
+  <link rel="stylesheet" href="/styles/erp.css" />
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-  <header>
-    <h1>📦 MM Courier | Daily Delivery Report</h1>
-  </header>
+  <div class="erp-container">
+    <aside class="sidebar">
+      <h2>MM Courier</h2>
+      <nav>
+        <a href="/dashboard.html">Dashboard</a>
+        <a class="active" href="/reports/daily-report.html">📦 Daily Deliveries</a>
+        <a href="/reports/age-analysis.html">📊 Age Analysis</a>
+        <a href="/reports/scan-exceptions.html">🚨 Scan Exceptions</a>
+        <a href="/reports/driver-performance.html">🚛 Driver Performance</a>
+        <a href="/reports/client-delivery.html">👤 Client Delivery</a>
+        <a href="/reports/pod-compliance.html">📄 POD Compliance</a>
+        <a href="/reports/billing-summary.html">💰 Billing Summary</a>
+        <a href="/reports/tripsheet-summary.html">📝 Trip Sheet Summary</a>
+      </nav>
+    </aside>
 
-  <div class="sidebar">
-    <a href="dashboard.html">📊 Dashboard</a>
-    <a href="daily-report.html">📅 Daily Report</a>
-    <a href="age-analysis.html">📈 Age Analysis</a>
-    <a href="driver-performance.html">🚚 Driver Performance</a>
-    <a href="client-report.html">👥 Client Delivery</a>
-    <a href="scan-exceptions.html">❌ Scan Exceptions</a>
-    <a href="pod-compliance.html">📑 POD Compliance</a>
-    <a href="billing-summary.html">💵 Billing Summary</a>
-    <a href="tripsheet-summary.html">📝 Trip Sheet Summary</a>
+    <main class="main-content">
+      <header>
+        <h1>📦 Daily Deliveries</h1>
+      </header>
+
+      <section class="filters">
+        <label>From: <input type="date" id="fromDate" /></label>
+        <label>To: <input type="date" id="toDate" /></label>
+        <label>Customer:
+          <input type="text" id="customerFilter" placeholder="e.g. FedEx, DSV" />
+        </label>
+        <label>Status:
+          <select id="statusFilter">
+            <option value="">All</option>
+            <option value="Delivered">Delivered</option>
+            <option value="Scanned Out">Scanned Out</option>
+            <option value="Received">Received</option>
+          </select>
+        </label>
+        <button onclick="fetchData()">🔍 Apply</button>
+        <button onclick="exportToCSV()">⬇ Export CSV</button>
+        <button onclick="exportToPDF()">🧾 Export PDF</button>
+      </section>
+
+      <section>
+        <table id="reportTable">
+          <thead>
+            <tr>
+              <th>Tracking #</th>
+              <th>Customer</th>
+              <th>Status</th>
+              <th>Driver</th>
+              <th>Delivered At</th>
+              <th>Recipient</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+    </main>
   </div>
 
-  <main>
-    <h2>Filter by Date, Customer, or Status</h2>
-    <form id="filterForm" class="filter-form">
-      <label>Date:
-        <input type="date" id="filterDate" name="date">
-      </label>
-      <label>Customer:
-        <input type="text" id="filterCustomer" name="customer" placeholder="e.g. FedEx">
-      </label>
-      <label>Status:
-        <select id="filterStatus" name="status">
-          <option value="">All</option>
-          <option value="Pending">Pending</option>
-          <option value="Received">Received</option>
-          <option value="Scanned Out">Scanned Out</option>
-          <option value="Delivered">Delivered</option>
-        </select>
-      </label>
-      <button type="submit" class="btn">Apply Filters</button>
-    </form>
-
-    <div class="actions">
-      <button onclick="exportCSV()" class="btn">Export CSV</button>
-      <button onclick="exportPDF()" class="btn">Export PDF</button>
-    </div>
-
-    <table id="reportTable">
-      <thead>
-        <tr>
-          <th>Tracking #</th>
-          <th>Customer</th>
-          <th>Status</th>
-          <th>Received Date</th>
-          <th>Delivered At</th>
-          <th>Received By</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Rows will be populated here -->
-      </tbody>
-    </table>
-  </main>
-
   <script>
-    // ✅ Login session check
-    const user = sessionStorage.getItem('user');
-    if (!user) {
-      alert('🔒 Please login to access reports.');
-      window.location.href = 'login.html';
-    }
+    const fetchData = async () => {
+      const from = document.getElementById('fromDate').value;
+      const to = document.getElementById('toDate').value;
+      const customer = document.getElementById('customerFilter').value.toLowerCase();
+      const status = document.getElementById('statusFilter').value;
 
-    // ✅ Fetch filtered report
-    document.getElementById('filterForm').addEventListener('submit', async function (e) {
-      e.preventDefault();
-      const date = document.getElementById('filterDate').value;
-      const customer = document.getElementById('filterCustomer').value;
-      const status = document.getElementById('filterStatus').value;
+      const res = await fetch('/api/parcels');
+      const parcels = await res.json();
+      const tbody = document.querySelector('#reportTable tbody');
+      tbody.innerHTML = '';
+
+      const filtered = parcels.filter(p => {
+        const d = new Date(p.delivered_at || p.created_at);
+        return (!from || new Date(from) <= d) &&
+               (!to || new Date(to) >= d) &&
+               (!customer || (p.customer || '').toLowerCase().includes(customer)) &&
+               (!status || p.status === status);
+      });
+
+      for (const p of filtered) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${p.tracking_number}</td>
+          <td>${p.customer || ''}</td>
+          <td>${p.status}</td>
+          <td>${p.driver_name || ''}</td>
+          <td>${p.delivered_at ? new Date(p.delivered_at).toLocaleString() : ''}</td>
+          <td>${p.received_by || ''}</td>
+        `;
+        tbody.appendChild(row);
+      }
+    };
+
+    const exportToCSV = () => {
+      const wb = XLSX.utils.table_to_book(document.getElementById('reportTable'), {sheet: "Daily Deliveries"});
+      XLSX.writeFile(wb, `DailyDeliveries_${new Date().toISOString().split('T')[0]}.xlsx`);
+    };
+
+    const exportToPDF = () => {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.text("Daily Deliveries Report", 14, 20);
+      doc.autoTable({ html: '#reportTable', startY: 30 });
+      doc.save(`DailyDeliveries_${new Date().toISOString().split('T')[0]}.pdf`);
+    };
+
+    fetchData();
+  </script>
+</body>
+</html>
