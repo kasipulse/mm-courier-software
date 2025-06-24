@@ -1,126 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>MM Courier Dashboard</title>
-  <link rel="stylesheet" href="styles.css">
   <style>
-    body {
+    :root {
+      --primary: #0a2b52;
+      --accent: #409dbc;
+      --highlight: #cebd80;
+      --bg: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
       margin: 0;
+      padding: 0;
       font-family: 'Segoe UI', sans-serif;
-      background-color: #f4f6f9;
     }
 
-    .topbar {
-      background-color: #0a2b52;
-      color: white;
-      padding: 15px;
+    body {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .topbar h1 {
-      margin: 0;
-      font-size: 20px;
+      background: var(--bg);
     }
 
     .sidebar {
-      background-color: #0a2b52;
       width: 250px;
+      background: var(--primary);
+      color: #fff;
       height: 100vh;
+      padding: 20px;
       position: fixed;
-      top: 0;
-      left: 0;
-      padding-top: 60px;
-      overflow-y: auto;
-      color: white;
+      transition: width 0.3s;
+    }
+
+    .sidebar.collapsed {
+      width: 60px;
+    }
+
+    .sidebar h2 {
+      font-size: 1.5em;
+      margin-bottom: 30px;
     }
 
     .sidebar a {
       display: block;
-      padding: 15px;
+      padding: 12px;
+      margin-bottom: 10px;
+      color: #fff;
       text-decoration: none;
-      color: white;
-      transition: background 0.3s;
+      border-radius: 4px;
+      transition: background 0.2s;
     }
 
     .sidebar a:hover {
-      background-color: #409dbc;
+      background: var(--accent);
     }
 
     .main {
       margin-left: 250px;
-      padding: 20px;
+      padding: 30px;
+      flex: 1;
+      transition: margin-left 0.3s;
     }
 
-    .report-section {
-      background-color: white;
-      border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 30px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    .sidebar.collapsed ~ .main {
+      margin-left: 60px;
     }
-
-    .report-section h2 {
-      margin-top: 0;
-      color: #0a2b52;
-    }
-
-    .logo {
-      height: 30px;
-      margin-right: 10px;
-    }
-
-    .branding {
-      display: flex;
-      align-items: center;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-
-    th, td {
-      padding: 10px;
-      border: 1px solid #ccc;
-      text-align: left;
-    }
-
-    th {
-      background-color: #cebd80;
-      color: #0a2b52;
-    }
-  </style>
-</head>
-<body>
-  <div class="topbar">
-    <div class="branding">
-      <img src="https://res.cloudinary.com/dwxgkbuln/image/upload/v1750675472/pakisa_logistics_express_pty_ltd_logo-removebg-preview_kbuvzs.png" class="logo" alt="Logo">
-      <h1>MM Courier ERP Dashboard</h1>
-    </div>
-    <a href="login.html" style="color: white;">Logout</a>
-  </div>
-
-  <div class="sidebar">
-    <a href="#">📊 Overview</a>
-    <a href="#">📦 Daily Deliveries</a>
-    <a href="#">⚠️ Scan Exceptions</a>
-    <a href="#">👷 Driver Performance</a>
-    <a href="#">👨‍💼 Client Delivery</a>
-    <a href="#">🧾 POD Compliance</a>
-    <a href="#">💵 Billing Summary</a>
-    <a href="#">📍 Trip Sheet Summary</a>
-    <a href="#">📅 Age Analysis</a>
-  </div>
-
-  <div class="main">
-    <div class="report-section">
-      <h2>Welcome, MM Courier</h2>
-      <p>Select a report on the left to begin.</p>
-    </div>
-  </div>
-</body>
-</html>
