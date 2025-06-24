@@ -2,176 +2,168 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Daily Deliveries | MM Courier</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Daily Report | MM Courier</title>
   <style>
-    :root {
-      --primary: #0a2b52;
-      --accent: #409dbc;
-      --highlight: #cebd80;
-      --bg: #ffffff;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', sans-serif;
-    }
-
     body {
-      display: flex;
-      background: var(--bg);
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+    }
+
+    header {
+      background-color: #0a2b52;
+      color: white;
+      padding: 15px 20px;
+      text-align: left;
     }
 
     .sidebar {
-      width: 250px;
-      background: var(--primary);
-      color: #fff;
+      width: 220px;
+      background-color: #409dbc;
       height: 100vh;
-      padding: 20px;
       position: fixed;
-      transition: width 0.3s;
-    }
-
-    .sidebar.collapsed {
-      width: 60px;
-    }
-
-    .sidebar h2 {
-      font-size: 1.5em;
-      margin-bottom: 30px;
+      top: 60px;
+      left: 0;
+      padding-top: 20px;
     }
 
     .sidebar a {
       display: block;
-      padding: 12px;
-      margin-bottom: 10px;
-      color: #fff;
+      color: white;
+      padding: 12px 20px;
       text-decoration: none;
-      border-radius: 4px;
-      transition: background 0.2s;
     }
 
     .sidebar a:hover {
-      background: var(--accent);
+      background-color: #cebd80;
+      color: black;
     }
 
-    .main {
-      margin-left: 250px;
-      padding: 30px;
-      flex: 1;
-      transition: margin-left 0.3s;
+    main {
+      margin-left: 240px;
+      padding: 20px;
     }
 
-    .sidebar.collapsed ~ .main {
-      margin-left: 60px;
+    h2 {
+      color: #0a2b52;
     }
 
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: var(--highlight);
-      padding: 10px 20px;
-      border-radius: 6px;
-      margin-bottom: 30px;
+    .filter-form label {
+      margin-right: 15px;
     }
 
-    .toggle-btn {
-      cursor: pointer;
-      background: transparent;
-      border: none;
-      font-size: 1.2em;
-      color: #000;
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-    }
-
-    .logo img {
-      height: 40px;
+    .filter-form input,
+    .filter-form select {
       margin-right: 10px;
+      padding: 5px;
     }
 
-    h1 {
-      color: var(--primary);
-      margin-bottom: 20px;
+    .actions {
+      margin-top: 15px;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
+      margin-top: 25px;
+      background-color: white;
     }
 
     th, td {
-      border: 1px solid #ccc;
+      border: 1px solid #ddd;
       padding: 10px;
       text-align: left;
     }
 
     th {
-      background: var(--accent);
+      background-color: #cebd80;
+    }
+
+    .btn {
+      padding: 10px 15px;
+      margin: 5px;
+      background-color: #0a2b52;
       color: white;
+      border: none;
+      cursor: pointer;
     }
 
-    tr:nth-child(even) {
-      background: #f2f2f2;
-    }
-
-    .no-data {
-      color: red;
-      margin-top: 20px;
+    .btn:hover {
+      background-color: #409dbc;
     }
   </style>
 </head>
 <body>
-  <div class="sidebar" id="sidebar">
-    <h2>MM Courier</h2>
+  <header>
+    <h1>📦 MM Courier | Daily Delivery Report</h1>
+  </header>
+
+  <div class="sidebar">
     <a href="dashboard.html">📊 Dashboard</a>
-    <a href="age-report.html">📅 Age Analysis</a>
-    <a href="daily-report.html">🚚 Daily Deliveries</a>
-    <a href="exceptions-report.html">⚠️ Scan Exceptions</a>
-    <a href="driver-performance.html">🧑‍✈️ Driver Performance</a>
-    <a href="client-report.html">🏢 Client Delivery</a>
-    <a href="pod-compliance.html">🖊 POD Compliance</a>
-    <a href="billing-summary.html">💰 Billing Summary</a>
-    <a href="tripsheet-summary.html">📋 Trip Sheet Summary</a>
-    <a href="index.html">🏠 Home</a>
+    <a href="daily-report.html">📅 Daily Report</a>
+    <a href="age-analysis.html">📈 Age Analysis</a>
+    <a href="driver-performance.html">🚚 Driver Performance</a>
+    <a href="client-report.html">👥 Client Delivery</a>
+    <a href="scan-exceptions.html">❌ Scan Exceptions</a>
+    <a href="pod-compliance.html">📑 POD Compliance</a>
+    <a href="billing-summary.html">💵 Billing Summary</a>
+    <a href="tripsheet-summary.html">📝 Trip Sheet Summary</a>
   </div>
 
-  <div class="main" id="main">
-    <div class="topbar">
-      <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
-      <div class="logo">
-        <img src="https://res.cloudinary.com/dwxgkbuln/image/upload/v1750675472/pakisa_logistics_express_pty_ltd_logo-removebg-preview_kbuvzs.png" alt="MM Courier Logo" />
-        <strong>Daily Deliveries Report</strong>
-      </div>
+  <main>
+    <h2>Filter by Date, Customer, or Status</h2>
+    <form id="filterForm" class="filter-form">
+      <label>Date:
+        <input type="date" id="filterDate" name="date">
+      </label>
+      <label>Customer:
+        <input type="text" id="filterCustomer" name="customer" placeholder="e.g. FedEx">
+      </label>
+      <label>Status:
+        <select id="filterStatus" name="status">
+          <option value="">All</option>
+          <option value="Pending">Pending</option>
+          <option value="Received">Received</option>
+          <option value="Scanned Out">Scanned Out</option>
+          <option value="Delivered">Delivered</option>
+        </select>
+      </label>
+      <button type="submit" class="btn">Apply Filters</button>
+    </form>
+
+    <div class="actions">
+      <button onclick="exportCSV()" class="btn">Export CSV</button>
+      <button onclick="exportPDF()" class="btn">Export PDF</button>
     </div>
 
-    <h1>🚚 Parcels Delivered Today</h1>
     <table id="reportTable">
       <thead>
         <tr>
-          <th>Tracking Number</th>
+          <th>Tracking #</th>
           <th>Customer</th>
-          <th>Driver</th>
-          <th>Delivered To</th>
-          <th>Time</th>
+          <th>Status</th>
+          <th>Received Date</th>
+          <th>Delivered At</th>
+          <th>Received By</th>
         </tr>
       </thead>
-      <tbody id="reportBody"></tbody>
+      <tbody>
+        <!-- Rows will be populated here -->
+      </tbody>
     </table>
-    <p id="noData" class="no-data" style="display:none;">No parcels delivered today.</p>
-  </div>
+  </main>
 
   <script>
-    function toggleSidebar() {
-      document.getElementById('sidebar').classList.toggle('collapsed');
-      document.getElementById('main').classList.toggle('collapsed');
+    // ✅ Login session check
+    const user = sessionStorage.getItem('user');
+    if (!user) {
+      alert('🔒 Please login to access reports.');
+      window.location.href = 'login.html';
     }
 
-    function isTo
+    // ✅ Fetch filtered report
+    document.getElementById('filterForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const date = document.getElementById('filterDate').value;
+      const customer = document.getElementById('filterCustomer').value;
+      const status = document.getElementById('filterStatus').value;
