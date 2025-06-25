@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Driver Portal | MM Courier</title>
+  <style>
+    :root {
+      --primary: #0a2b52;
+      --secondary: #409dbc;
+      --accent: #cebd80;
+      --white: #ffffff;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #f4f4f4;
+      color: var(--primary);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    header {
+      background-color: var(--primary);
+      color: var(--white);
+      padding: 15px;
+      text-align: center;
+    }
+
+    main {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      background-color: var(--secondary);
+      color: var(--white);
+      padding: 15px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      margin: 10px 0;
+      width: 100%;
+      max-width: 300px;
+      text-align: center;
+      text-decoration: none;
+      transition: background 0.3s;
+    }
+
+    .btn:hover {
+      background-color: var(--primary);
+    }
+
+    footer {
+      background-color: var(--primary);
+      color: var(--white);
+      text-align: center;
+      padding: 10px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🚚 MM Courier Driver Portal</h1>
+  </header>
+
+  <main>
+    <h2>Welcome, <span id="driverName">Driver</span></h2>
+
+    <a href="tripsheet.html" class="btn">📋 View Tripsheet</a>
+    <a href="scanin.html" class="btn">📥 Scan In</a>
+    <a href="scanout.html" class="btn">📤 Scan Out</a>
+    <a href="login.html" class="btn" onclick="logout()">🚪 Logout</a>
+  </main>
+
+  <footer>
+    &copy; 2025 MM Courier
+  </footer>
+
+  <script>
+    // Simulate session from localStorage
+    const user = JSON.parse(localStorage.getItem('driver'));
+    if (!user) {
+      window.location.href = "login.html";
+    } else {
+      document.getElementById('driverName').textContent = user.name;
+    }
+
+    function logout() {
+      localStorage.removeItem('driver');
+    }
+  </script>
+
+</body>
+</html>
