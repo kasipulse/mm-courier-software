@@ -3,93 +3,121 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Welcome | MM Courier</title>
-  <link rel="stylesheet" href="styles.css" />
+  <title>MM Courier | Home</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f6f8;
+    :root {
+      --primary: #0a2b52;
+      --secondary: #409dbc;
+      --accent: #cebd80;
+      --white: #ffffff;
+    }
+
+    * {
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
     }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: var(--white);
+      color: var(--primary);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
     header {
-      background-color: #0a2b52;
-      color: white;
-      padding: 1rem 2rem;
+      background-color: var(--primary);
+      color: var(--white);
+      padding: 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
+
     header img {
       height: 50px;
     }
-    .container {
-      padding: 3rem 2rem;
-      text-align: center;
+
+    header h1 {
+      font-size: 24px;
+      margin-left: 15px;
     }
-    h1 {
-      color: #0a2b52;
-      margin-bottom: 0.5rem;
+
+    main {
+      flex-grow: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #f5f5f5;
     }
-    p {
-      color: #555;
-      margin-bottom: 2rem;
-    }
-    .tiles {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 1.5rem;
-      max-width: 900px;
+
+    .button-group {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      width: 100%;
+      max-width: 300px;
       margin: auto;
     }
-    .tile {
-      background-color: white;
-      border: 2px solid #cebd80;
-      border-radius: 10px;
-      padding: 2rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    .tile:hover {
-      background-color: #409dbc;
-      color: white;
-      border-color: #0a2b52;
-    }
-    .tile a {
-      text-decoration: none;
-      color: inherit;
-      display: block;
-      font-weight: bold;
-    }
-    footer {
-      margin-top: 4rem;
+
+    .button {
+      background-color: var(--secondary);
+      color: var(--white);
+      padding: 15px;
       text-align: center;
-      font-size: 0.9rem;
-      color: #777;
+      border: none;
+      border-radius: 5px;
+      text-decoration: none;
+      font-size: 18px;
+      transition: background-color 0.3s;
+    }
+
+    .button:hover {
+      background-color: var(--primary);
+    }
+
+    footer {
+      background-color: var(--primary);
+      color: var(--white);
+      text-align: center;
+      padding: 10px;
+      font-size: 14px;
+    }
+
+    @media (max-width: 600px) {
+      header h1 {
+        font-size: 18px;
+      }
+      .button {
+        font-size: 16px;
+        padding: 12px;
+      }
     }
   </style>
 </head>
 <body>
+
   <header>
     <img src="https://res.cloudinary.com/dwxgkbuln/image/upload/v1750675472/pakisa_logistics_express_pty_ltd_logo-removebg-preview_kbuvzs.png" alt="MM Courier Logo" />
-    <h2>MM Courier</h2>
+    <h1>MM Courier System</h1>
   </header>
 
-  <div class="container">
-    <h1>Welcome to MM Courier</h1>
-    <p>Your all-in-one courier management dashboard</p>
-
-    <div class="tiles">
-      <div class="tile"><a href="dashboard.html">📊 Admin Dashboard</a></div>
-      <div class="tile"><a href="tripsheet.html">🚚 View Trip Sheets</a></div>
-      <div class="tile"><a href="scanin.html">📦 Scan Parcels</a></div>
-      <div class="tile"><a href="driver-login.html">🧍 Driver Login</a></div>
+  <main>
+    <div class="button-group">
+      <a href="dashboard.html" class="button">Dashboard</a>
+      <a href="scanin.html" class="button">Scan In</a>
+      <a href="scanout.html" class="button">Scan Out</a>
+      <a href="tripsheet.html" class="button">Tripsheet</a>
+      <a href="login.html" class="button">Driver Login</a>
     </div>
-  </div>
+  </main>
 
   <footer>
-    &copy; 2025 MM Courier | Powered by Pakisa Logistics | ops1@pakisalogistics.co.za | 011 397 1151
+    &copy; 2025 MM Courier | 10 Burry Koean Street, Jet Park, Boksburg, 1469 |
+    Tel: 0113971151 | <a href="https://www.pakisalogistics.co.za" style="color: var(--accent); text-decoration: underline;">pakisalogistics.co.za</a>
   </footer>
+
 </body>
 </html>
