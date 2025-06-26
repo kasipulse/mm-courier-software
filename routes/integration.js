@@ -1,40 +1,36 @@
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
-require('dotenv').config();
 
-// ParcelPerfect credentials (keep these in .env)
-const PARCELPERFECT_URL = 'https://brlweb12904.pperfect.com/ppintegrationservice/v27/Json/';
-const PP_USERNAME = process.env.PP_USERNAME;
-const PP_PASSWORD = process.env.PP_PASSWORD;
+// 🔐 Replace with your ParcelPerfect credentials
+const PP_USERNAME = 'pakiso@ubp';
+const PP_PASSWORD = 'zBLB8KFJ5g5XBYwz';
+const PP_ENDPOINT = 'https://brlweb12904.pperfect.com/ppintegrationservice/v27/Json/';
 
-router.post('/send-update', async (req, res) => {
-  const { tracking_number, status, delivered_by } = req.body;
+// ✅ Send delivery update to ParcelPerfect
+router.post('/send-pod', async (req, res) => {
+  const { waybill_number, pod_url, delivered_by, delivered_date } = req.body;
+
+  if (!waybill_number || !pod_url || !delivered_by || !delivered_date) {
+    return res.status(400).json({ success: false, message: 'Missing required fields.' });
+  }
 
   const payload = {
-    Method: 'UpdateTracking',
-    Data: {
-      TrackingNumber: tracking_number,
-      Status: status,
-      DeliveredBy: delivered_by,
-      DeliveryDate: new Date().toISOString()
-    }
+    Username: PP_USERNAME,
+    Password: PP_PASSWORD,
+    Request: 'AddProofOfDelivery',
+    WaybillNumber: waybill_number,
+    DeliveredBy: delivered_by,
+    DeliveryDate: delivered_date,
+    PODUrl: pod_url
   };
 
-  const auth = Buffer.from(`${PP_USERNAME}:${PP_PASSWORD}`).toString('base64');
-
   try {
-    const response = await axios.post(PARCELPERFECT_URL, payload, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Basic ${auth}`
-      }
-    });
-
-    res.json({ success: true, data: response.data });
-  } catch (error) {
-    console.error('ParcelPerfect Error:', error.message);
-    res.status(500).json({ success: false, message: 'Failed to send update to ParcelPerfect.' });
+    const { data } = await axios.post(PP_ENDPOINT, payload);
+    res.json({ success: true, response: data });
+  } catch (err) {
+    console.error('❌ Integration error:', err.message);
+    res.status(500).json({ success: false, message: 'Failed to send to ParcelPerfect.' });
   }
 });
 
