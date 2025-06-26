@@ -2,9 +2,11 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const parcelRoutes = require('./routes/parcels'); // ✅ parcels routes
-const authRoutes = require('./routes/auth');      // ✅ auth routes
-const driversRoutes = require('./routes/drivers'); // ✅ drivers routes (new)
+
+const parcelRoutes = require('./routes/parcels');    // ✅ parcels routes
+const authRoutes = require('./routes/auth');          // ✅ auth routes
+const driversRoutes = require('./routes/drivers');    // ✅ drivers routes
+const integrationRoutes = require('./routes/integration'); // ✅ integration route
 
 dotenv.config();
 
@@ -18,7 +20,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ✅ API routes
 app.use('/api/parcels', parcelRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api/drivers', driversRoutes); // <-- Added drivers route here
+app.use('/api/drivers', driversRoutes);
+app.use('/api/integration', integrationRoutes); // ✅ ParcelPerfect JSON API hook
 
 // ✅ Health check
 app.get('/', (req, res) => {
