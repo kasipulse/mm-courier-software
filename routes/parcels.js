@@ -1,15 +1,9 @@
-const express = require('express');
-const router = express.Router();
-const { createClient } = require('@supabase/supabase-js');
+// ✅ POD Upload route — upload image + update parcel + send to ParcelPerfect
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const streamifier = require('streamifier');
-require('dotenv').config();
+const axios = require('axios');
 
-// Supabase connection
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
-
-// Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -18,71 +12,6 @@ cloudinary.config({
 
 const upload = multer();
 
-// 🔁 GET all parcels (for dashboard or reporting)
-router.get('/', async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('parcels')
-      .select('*')
-      .order('received_date', { ascending: false });
-
-    if (error) throw error;
-    res.json(data);
-  } catch (err) {
-    console.error('Error fetching parcels:', err.message);
-    res.status(500).json({ error: 'Failed to fetch parcels' });
-  }
-});
-
-// ✅ SCAN IN route — mark parcel as received
-router.put('/scanin/:tracking_number', async (req, res) => {
-  const { tracking_number } = req.params;
-
-  try {
-    const { data, error } = await supabase
-      .from('parcels')
-      .update({
-        status: 'Received',
-        received_date: new Date().toISOString()
-      })
-      .eq('tracking_number', tracking_number)
-      .eq('status', 'Pending') // Only update if still pending
-      .single();
-
-    if (error || !data) throw error || new Error('Parcel not found or already received');
-    res.json({ success: true, message: 'Parcel scanned in successfully.' });
-  } catch (err) {
-    console.error('Scan-in error:', err.message);
-    res.status(400).json({ success: false, message: err.message });
-  }
-});
-
-// ✅ SCAN OUT route — assign to driver and mark scanned out
-router.put('/:tracking_number/scanout', async (req, res) => {
-  const { tracking_number } = req.params;
-  const { driver_name } = req.body;
-
-  try {
-    const { data, error } = await supabase
-      .from('parcels')
-      .update({
-        status: 'Scanned Out',
-        driver_name,
-        scanned_out_at: new Date().toISOString()
-      })
-      .eq('tracking_number', tracking_number)
-      .eq('status', 'Received') // Only scan out parcels already received
-      .single();
-
-    if (error || !data) throw error || new Error('Parcel not found or already scanned out');
-    res.json({ success: true, message: 'Parcel assigned to driver successfully.' });
-  } catch (err) {
-    console.error('Scan-out error:', err.message);
-    res.status(400).json({ success: false, message: err.message });
-  }
-});
-
-// ✅ POD Upload route — upload image + update parcel
 router.post('/pod', upload.single('image'), async (req, res) => {
   const { tracking_number, received_by, delivered_at_time } = req.body;
   const file = req.file;
@@ -92,6 +21,7 @@ router.post('/pod', upload.single('image'), async (req, res) => {
   }
 
   try {
+    // Step 1: Upload image to Cloudinary
     const streamUpload = (buffer) => {
       return new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
@@ -107,6 +37,7 @@ router.post('/pod', upload.single('image'), async (req, res) => {
 
     const uploadResult = await streamUpload(file.buffer);
 
+    // Step 2: Update Supabase
     const { data, error } = await supabase
       .from('parcels')
       .update({
@@ -117,16 +48,32 @@ router.post('/pod', upload.single('image'), async (req, res) => {
         delivered_at_time
       })
       .eq('tracking_number', tracking_number)
-      .eq('status', 'Scanned Out') // Only update if parcel was scanned out
+      .eq('status', 'Scanned Out')
       .single();
 
     if (error || !data) throw error || new Error('Parcel not found or not eligible for POD.');
 
-    res.json({ success: true, message: 'POD uploaded.', pod_url: uploadResult.secure_url });
+    // ✅ Step 3: Automatically send to ParcelPerfect JSON API
+    const ppPayload = {
+      Username: process.env.PP_USERNAME,
+      Password: process.env.PP_PASSWORD,
+      Request: 'AddProofOfDelivery',
+      WaybillNumber: data.waybill_number,
+      DeliveredBy: received_by,
+      DeliveryDate: new Date().toISOString().split('T')[0],
+      PODUrl: uploadResult.secure_url
+    };
+
+    try {
+      await axios.post(process.env.PP_ENDPOINT, ppPayload);
+      console.log('✅ POD sent to ParcelPerfect successfully.');
+    } catch (ppError) {
+      console.warn('⚠️ Failed to send POD to ParcelPerfect:', ppError.message);
+    }
+
+    res.json({ success: true, message: 'POD uploaded and updated.', pod_url: uploadResult.secure_url });
   } catch (err) {
     console.error('POD upload error:', err.message);
     res.status(500).json({ success: false, message: 'Upload failed. ' + err.message });
   }
 });
-
-module.exports = router;
