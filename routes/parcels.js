@@ -1,9 +1,16 @@
-// ✅ POD Upload route — upload image + update parcel + send to ParcelPerfect
+const express = require('express');
+const router = express.Router(); // ✅ Declare the router
+const { createClient } = require('@supabase/supabase-js');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const streamifier = require('streamifier');
 const axios = require('axios');
+require('dotenv').config();
 
+// ✅ Supabase setup
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+
+// ✅ Cloudinary setup
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -12,6 +19,7 @@ cloudinary.config({
 
 const upload = multer();
 
+// ✅ POD Upload route — upload image + update parcel + send to ParcelPerfect
 router.post('/pod', upload.single('image'), async (req, res) => {
   const { tracking_number, received_by, delivered_at_time } = req.body;
   const file = req.file;
@@ -53,7 +61,7 @@ router.post('/pod', upload.single('image'), async (req, res) => {
 
     if (error || !data) throw error || new Error('Parcel not found or not eligible for POD.');
 
-    // ✅ Step 3: Automatically send to ParcelPerfect JSON API
+    // Step 3: Automatically send to ParcelPerfect JSON API
     const ppPayload = {
       Username: process.env.PP_USERNAME,
       Password: process.env.PP_PASSWORD,
@@ -77,3 +85,5 @@ router.post('/pod', upload.single('image'), async (req, res) => {
     res.status(500).json({ success: false, message: 'Upload failed. ' + err.message });
   }
 });
+
+module.exports = router; // ✅ Export the router
