@@ -2,46 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Upload MDE File | MM Courier</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MDE Upload | MM Courier</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f9f9f9;
-      padding: 40px;
-    }
-    h1 {
-      text-align: center;
-      color: #0a2b52;
-    }
-    form {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      max-width: 500px;
-      margin: auto;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    input[type="file"], button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 20px;
-    }
-    #result {
-      text-align: center;
-      margin-top: 20px;
-      font-weight: bold;
-    }
-    .success { color: green; }
-    .error { color: red; }
+    body { font-family: Arial, sans-serif; padding: 30px; }
+    form { max-width: 400px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px #ccc; }
+    label, input, button { display: block; width: 100%; margin-top: 10px; }
+    #result { margin-top: 20px; text-align: center; font-weight: bold; }
   </style>
 </head>
 <body>
-
-  <h1>📤 Upload MDE File</h1>
-  <form id="mdeForm">
-    <input type="file" name="mdefile" accept=".xml,.txt" required />
-    <button type="submit">Upload MDE</button>
+  <h2 style="text-align:center;">📄 Upload MDE File</h2>
+  <form id="mdeForm" enctype="multipart/form-data">
+    <label>Select FedEx MDE .txt File</label>
+    <input type="file" name="mdeFile" accept=".txt,.text" required>
+    <button type="submit">Upload</button>
   </form>
 
   <div id="result"></div>
@@ -53,21 +27,15 @@
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const formData = new FormData(form);
-      try {
-        const res = await fetch('/api/integration/upload-mde', {
-          method: 'POST',
-          body: formData
-        });
-        const data = await res.json();
-        result.textContent = data.message;
-        result.className = data.success ? 'success' : 'error';
-        if (data.success) form.reset();
-      } catch (err) {
-        result.textContent = '❌ Upload failed.';
-        result.className = 'error';
-      }
+
+      const res = await fetch('/api/to/mde-upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await res.json();
+      result.textContent = data.message || 'Upload complete';
     });
   </script>
-
 </body>
 </html>
