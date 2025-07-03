@@ -2,148 +2,72 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>MDE Upload | MM Courier</title>
+  <title>Upload MDE File | MM Courier</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #f0f4f8;
+      background: #f9f9f9;
+      padding: 40px;
     }
     h1 {
       text-align: center;
       color: #0a2b52;
     }
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 500px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
     input[type="file"], button {
-      display: block;
-      margin: 20px auto;
-      padding: 10px;
-      width: 80%;
-      max-width: 400px;
-    }
-    table {
-      margin-top: 30px;
       width: 100%;
-      border-collapse: collapse;
+      padding: 12px;
+      margin-top: 20px;
     }
-    th, td {
-      padding: 8px;
-      border: 1px solid #ccc;
-      font-size: 14px;
-    }
-    th {
-      background: #0a2b52;
-      color: white;
-    }
-    #status {
+    #result {
       text-align: center;
       margin-top: 20px;
       font-weight: bold;
     }
+    .success { color: green; }
+    .error { color: red; }
   </style>
 </head>
 <body>
 
-  <h1>📦 Upload FedEx MDE File</h1>
+  <h1>📤 Upload MDE File</h1>
+  <form id="mdeForm">
+    <input type="file" name="mdefile" accept=".xml,.txt" required />
+    <button type="submit">Upload MDE</button>
+  </form>
 
-  <input type="file" id="fileInput" accept=".mde,.xml">
-  <button id="uploadBtn">Parse and Upload</button>
-
-  <div id="status"></div>
-
-  <table id="parcelTable" style="display:none;">
-    <thead>
-      <tr>
-        <th>Tracking #</th>
-        <th>Consignee</th>
-        <th>Address</th>
-        <th>Description</th>
-        <th>Weight</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <div id="result"></div>
 
   <script>
-    const fileInput = document.getElementById('fileInput');
-    const uploadBtn = document.getElementById('uploadBtn');
-    const status = document.getElementById('status');
-    const parcelTable = document.getElementById('parcelTable');
-    const tableBody = parcelTable.querySelector('tbody');
+    const form = document.getElementById('mdeForm');
+    const result = document.getElementById('result');
 
-    let parcels = [];
-
-    uploadBtn.addEventListener('click', () => {
-      const file = fileInput.files[0];
-      if (!file) {
-        alert('Please select a .mde or .xml file');
-        return;
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      try {
+        const res = await fetch('/api/integration/upload-mde', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        result.textContent = data.message;
+        result.className = data.success ? 'success' : 'error';
+        if (data.success) form.reset();
+      } catch (err) {
+        result.textContent = '❌ Upload failed.';
+        result.className = 'error';
       }
-
-      const reader = new FileReader();
-      reader.onload = async function (e) {
-        const xmlText = e.target.result;
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
-
-        const parcel = {
-          tracking_number: xmlDoc.querySelector('mdeTrackNbr')?.textContent,
-          waybill_number: xmlDoc.querySelector('mdeAirbillNbr')?.textContent,
-          customer: xmlDoc.querySelector('mdeConsigneeCompany')?.textContent || '',
-          content: xmlDoc.querySelector('mdeDescription')?.textContent?.trim() || '',
-          status: 'Pending',
-          received_date: null
-        };
-
-        parcels = [parcel];
-        showTable(parcels);
-        await uploadParcels(parcels);
-      };
-
-      reader.readAsText(file);
     });
-
-    function showTable(data) {
-      tableBody.innerHTML = '';
-      data.forEach(p => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${p.tracking_number}</td>
-          <td>${p.customer}</td>
-          <td>${p.content}</td>
-          <td>${p.content}</td>
-          <td>1.30</td>
-          <td>${p.status}</td>
-        `;
-        tableBody.appendChild(row);
-      });
-      parcelTable.style.display = 'table';
-    }
-
-    async function uploadParcels(data) {
-      status.textContent = '⏳ Uploading...';
-
-      let success = 0;
-      let fail = 0;
-
-      for (let p of data) {
-        try {
-          const res = await fetch('/api/parcels', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(p)
-          });
-
-          if (res.ok) success++;
-          else fail++;
-        } catch (e) {
-          fail++;
-        }
-      }
-
-      status.textContent = `✅ ${success} uploaded, ❌ ${fail} failed.`;
-    }
   </script>
+
 </body>
 </html>
