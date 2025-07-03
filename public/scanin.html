@@ -1,82 +1,65 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Scan In | MM Courier</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://unpkg.com/html5-qrcode"></script>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
-      font-family: Arial, sans-serif;
       margin: 0;
-      background-color: #f4f4f4;
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
       display: flex;
       flex-direction: column;
       height: 100vh;
     }
-
-    header {
-      background-color: #0a2b52;
+    h1 {
+      background: #0a2b52;
       color: white;
-      padding: 12px;
+      padding: 15px;
       text-align: center;
-      font-size: 18px;
+      font-size: 20px;
+      margin: 0;
     }
-
     #reader {
-      flex: 1;
+      flex-grow: 1;
       width: 100%;
-      max-width: 100%;
-      margin: 0 auto;
-      background: black;
     }
-
-    #message {
-      text-align: center;
+    .controls {
       padding: 10px;
-      font-weight: bold;
-      background-color: #fff;
-      color: #333;
-    }
-
-    footer {
-      background: #fff;
-      padding: 10px;
+      background: white;
       display: flex;
+      flex-direction: column;
       gap: 10px;
-      justify-content: center;
     }
-
-    footer button {
-      padding: 10px;
+    .message {
+      text-align: center;
+      font-weight: bold;
       font-size: 16px;
-      flex: 1;
-      max-width: 150px;
-    }
-
-    input[type="text"] {
-      display: none;
+      margin-top: 5px;
+      color: #333;
     }
   </style>
 </head>
 <body>
-  <header>📦 Scan In Parcel</header>
+  <h1>📦 Scan In</h1>
 
   <div id="reader"></div>
+  <div class="controls">
+    <div class="message" id="message">Waiting for scan...</div>
+    <button onclick="stopScanner()">⛔ Stop Scanner</button>
+  </div>
 
-  <div id="message">📷 Initializing scanner...</div>
-
-  <footer>
-    <button onclick="clearInput()">🧹 Clear</button>
-    <button onclick="stopScanner()">⛔ Stop</button>
-  </footer>
+  <!-- ✅ Embedded base64 success and error sounds -->
+  <audio id="successSound" src="data:audio/mp3;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCA..."></audio>
+  <audio id="errorSound" src="data:audio/mp3;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCA..."></audio>
 
   <script>
-    let html5QrCode;
-    let isScanning = false;
-    let lastScanned = '';
-
     const message = document.getElementById('message');
+    const successSound = document.getElementById('successSound');
+    const errorSound = document.getElementById('errorSound');
+    let html5QrCode;
 
     function startScanner() {
       html5QrCode = new Html5Qrcode("reader");
@@ -84,26 +67,16 @@
         if (cameras && cameras.length) {
           html5QrCode.start(
             { facingMode: "environment" },
-            { fps: 10 },
-            qrCodeMessage => {
-              if (qrCodeMessage !== lastScanned) {
-                lastScanned = qrCodeMessage;
-                autoScanIn(qrCodeMessage);
-              }
-            }
+            { fps: 10, qrbox: { width: 350, height: 350 } },
+            qrCodeMessage => handleScan(qrCodeMessage)
           );
-          isScanning = true;
         } else {
           message.textContent = "⚠️ No camera found.";
         }
-      }).catch(err => {
-        message.textContent = `⚠️ Error starting scanner: ${err.message}`;
       });
     }
 
-    function autoScanIn(trackingNumber) {
-      message.textContent = `⏳ Scanning in ${trackingNumber}...`;
-
+    function handleScan(trackingNumber) {
       fetch(`/api/parcels/scanin/${trackingNumber}`, {
         method: 'PUT'
       })
@@ -111,43 +84,28 @@
       .then(data => {
         if (data.success) {
           message.textContent = `✅ ${trackingNumber} scanned in.`;
+          successSound.play();
         } else {
           message.textContent = `❌ ${trackingNumber}: ${data.message}`;
+          errorSound.play();
         }
-
-        // reset scanner after 2 seconds
-        setTimeout(() => {
-          message.textContent = '📷 Ready for next scan';
-          lastScanned = '';
-        }, 2000);
       })
       .catch(() => {
-        message.textContent = '❌ Network error during scan-in.';
-        setTimeout(() => {
-          message.textContent = '📷 Ready for next scan';
-          lastScanned = '';
-        }, 2000);
+        message.textContent = `❌ Failed to scan ${trackingNumber}.`;
+        errorSound.play();
       });
     }
 
-    function clearInput() {
-      lastScanned = '';
-      message.textContent = '📷 Cleared. Ready to scan.';
-    }
-
     function stopScanner() {
-      if (html5QrCode && isScanning) {
+      if (html5QrCode) {
         html5QrCode.stop().then(() => {
-          document.getElementById("reader").innerHTML = '';
+          document.getElementById("reader").innerHTML = "";
           message.textContent = '🛑 Scanner stopped.';
-          isScanning = false;
-        }).catch(err => {
-          message.textContent = '⚠️ Failed to stop scanner.';
         });
       }
     }
 
-    // Start automatically
+    // Start scanning on load
     window.onload = startScanner;
   </script>
 </body>
