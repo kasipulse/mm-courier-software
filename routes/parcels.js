@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const fs = require('fs');
 const { createClient } = require('@supabase/supabase-js');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
@@ -10,16 +11,16 @@ require('dotenv').config();
 // Supabase connection
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
-// Configure Cloudinary
+// Cloudinary config
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const upload = multer();
+const upload = multer({ dest: 'uploads/' }); // for MDE + POD
 
-// 🔁 GET all parcels (for dashboard or reporting)
+// 🔁 GET all parcels
 router.get('/', async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -124,7 +125,6 @@ router.post('/pod', upload.single('image'), async (req, res) => {
 
     if (error || !data) throw error || new Error('Parcel not found or not eligible for POD.');
 
-    // ✅ Optionally push to ParcelPerfect
     const ppPayload = {
       Username: process.env.PP_USERNAME,
       Password: process.env.PP_PASSWORD,
@@ -146,6 +146,39 @@ router.post('/pod', upload.single('image'), async (req, res) => {
   } catch (err) {
     console.error('POD upload error:', err.message);
     res.status(500).json({ success: false, message: 'Upload failed. ' + err.message });
+  }
+});
+
+// ✅ MDE Upload
+router.post('/mde-upload', upload.single('mdeFile'), async (req, res) => {
+  const filePath = req.file.path;
+
+  try {
+    const raw = fs.readFileSync(filePath, 'utf8');
+    const lines = raw.split('\n');
+
+    let processed = 0;
+
+    for (const line of lines) {
+      if (line.trim().length < 12) continue;
+
+      const trackingNumber = line.substring(0, 12).trim();
+
+      if (trackingNumber) {
+        const { data, error } = await supabase
+          .from('parcels')
+          .update({ status: 'Received from FedEx' })
+          .eq('tracking_number', trackingNumber);
+
+        if (!error) processed++;
+      }
+    }
+
+    fs.unlinkSync(filePath);
+    res.json({ success: true, message: `✅ Processed ${processed} records from MDE file.` });
+  } catch (err) {
+    console.error('❌ Error parsing MDE:', err.message);
+    res.status(500).json({ success: false, message: 'Failed to process file' });
   }
 });
 
