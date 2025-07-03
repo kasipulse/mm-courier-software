@@ -1,39 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Scan In | MM Courier</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body { font-family: Arial; padding: 20px; background: #f9f9f9; }
-    h1 { color: #0a2b52; text-align: center; }
-    #reader { width: 100%; margin: 20px auto; max-width: 400px; }
-    input, button { padding: 10px; width: 100%; margin-top: 10px; }
-    .message { text-align: center; font-weight: bold; margin-top: 15px; }
-    .controls { display: flex; gap: 10px; margin-top: 10px; }
-    .controls button { flex: 1; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #f4f4f4;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    header {
+      background-color: #0a2b52;
+      color: white;
+      padding: 12px;
+      text-align: center;
+      font-size: 18px;
+    }
+
+    #reader {
+      flex: 1;
+      width: 100%;
+      max-width: 100%;
+      margin: 0 auto;
+      background: black;
+    }
+
+    #message {
+      text-align: center;
+      padding: 10px;
+      font-weight: bold;
+      background-color: #fff;
+      color: #333;
+    }
+
+    footer {
+      background: #fff;
+      padding: 10px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    footer button {
+      padding: 10px;
+      font-size: 16px;
+      flex: 1;
+      max-width: 150px;
+    }
+
+    input[type="text"] {
+      display: none;
+    }
   </style>
 </head>
 <body>
-  <h1>📦 Scan In Parcel</h1>
-  
+  <header>📦 Scan In Parcel</header>
+
   <div id="reader"></div>
-  <input type="text" id="trackingNumber" placeholder="Tracking Number" readonly />
 
-  <div class="controls">
-    <button onclick="scanParcel()">✅ Scan In</button>
+  <div id="message">📷 Initializing scanner...</div>
+
+  <footer>
     <button onclick="clearInput()">🧹 Clear</button>
-  </div>
-  <button onclick="stopScanner()">⛔ Stop Scanning</button>
-
-  <div class="message" id="message"></div>
+    <button onclick="stopScanner()">⛔ Stop</button>
+  </footer>
 
   <script>
     let html5QrCode;
     let isScanning = false;
+    let lastScanned = '';
 
     const message = document.getElementById('message');
-    const input = document.getElementById('trackingNumber');
 
     function startScanner() {
       html5QrCode = new Html5Qrcode("reader");
@@ -41,25 +84,25 @@
         if (cameras && cameras.length) {
           html5QrCode.start(
             { facingMode: "environment" },
-            { fps: 10, qrbox: 250 },
+            { fps: 10 },
             qrCodeMessage => {
-              input.value = qrCodeMessage;
-              message.textContent = "✅ Scanned! You may now submit.";
+              if (qrCodeMessage !== lastScanned) {
+                lastScanned = qrCodeMessage;
+                autoScanIn(qrCodeMessage);
+              }
             }
           );
           isScanning = true;
         } else {
           message.textContent = "⚠️ No camera found.";
         }
+      }).catch(err => {
+        message.textContent = `⚠️ Error starting scanner: ${err.message}`;
       });
     }
 
-    function scanParcel() {
-      const trackingNumber = input.value.trim();
-      if (!trackingNumber) {
-        message.textContent = '⚠️ No tracking number.';
-        return;
-      }
+    function autoScanIn(trackingNumber) {
+      message.textContent = `⏳ Scanning in ${trackingNumber}...`;
 
       fetch(`/api/parcels/scanin/${trackingNumber}`, {
         method: 'PUT'
@@ -67,20 +110,29 @@
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          message.textContent = '✅ Parcel scanned in successfully!';
-          input.value = '';
+          message.textContent = `✅ ${trackingNumber} scanned in.`;
         } else {
-          message.textContent = `❌ ${data.message}`;
+          message.textContent = `❌ ${trackingNumber}: ${data.message}`;
         }
+
+        // reset scanner after 2 seconds
+        setTimeout(() => {
+          message.textContent = '📷 Ready for next scan';
+          lastScanned = '';
+        }, 2000);
       })
       .catch(() => {
-        message.textContent = '❌ Failed to scan in parcel.';
+        message.textContent = '❌ Network error during scan-in.';
+        setTimeout(() => {
+          message.textContent = '📷 Ready for next scan';
+          lastScanned = '';
+        }, 2000);
       });
     }
 
     function clearInput() {
-      input.value = '';
-      message.textContent = '';
+      lastScanned = '';
+      message.textContent = '📷 Cleared. Ready to scan.';
     }
 
     function stopScanner() {
@@ -95,7 +147,7 @@
       }
     }
 
-    // start scanning on load
+    // Start automatically
     window.onload = startScanner;
   </script>
 </body>
