@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Upload MDE File | MM Courier</title>
+  <style>
+    body { font-family: Arial; padding: 30px; background: #f2f2f2; }
+    form { max-width: 500px; margin: auto; background: #fff; padding: 20px; border-radius: 6px; }
+    h1 { text-align: center; }
+    label { display: block; margin-top: 15px; }
+    input, button { width: 100%; padding: 10px; margin-top: 5px; }
+    #result { margin-top: 20px; text-align: center; }
+  </style>
+</head>
+<body>
+  <h1>📤 Upload FedEx MDE File</h1>
+  <form id="mdeForm">
+    <label for="mdeFile">Select .mde file</label>
+    <input type="file" name="mdeFile" id="mdeFile" accept=".txt,.mde" required />
+    <button type="submit">Upload and Process</button>
+  </form>
+  <div id="result"></div>
+
+  <script>
+    const form = document.getElementById('mdeForm');
+    const result = document.getElementById('result');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+
+      try {
+        const res = await fetch('/api/parcels/mde-upload', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        result.innerText = data.message || 'Upload completed';
+      } catch (err) {
+        result.innerText = 'Upload failed. Please try again.';
+      }
+    });
+  </script>
+</body>
+</html>
