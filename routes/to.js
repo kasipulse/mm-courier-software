@@ -13,17 +13,23 @@ router.post('/mde-upload', upload.single('mdeFile'), async (req, res) => {
   }
 
   const xml = req.file.buffer.toString('utf8');
+  console.log('📄 Raw XML:', xml.slice(0, 300));
 
   try {
     const parser = new xml2js.Parser({ explicitArray: false });
     const parsed = await parser.parseStringPromise(xml);
+    console.log('✅ Parsed MDE:', parsed);
+
+    if (!parsed || !parsed.XMLmde) {
+      return res.status(400).json({ success: false, message: 'Invalid MDE XML structure' });
+    }
 
     const record = parsed.XMLmde;
     const tracking = record.mdeTrackNbr || record.mdeAirbillNbr;
     const consignee = record.mdeConsigneeNm || '';
     const phone = record.mdeConsigneePhone || '';
     const address = record.mdeConsigneeAddress1 || '';
-    const weight = record.mdeTotWeight || '';
+    const weight = parseFloat(record.mdeTotWeight || '0') || 0;
     const description = record.mdeDescription?.trim() || '';
 
     if (!tracking) {
@@ -35,7 +41,7 @@ router.post('/mde-upload', upload.single('mdeFile'), async (req, res) => {
       recipient_name: consignee,
       recipient_phone: phone,
       delivery_address: address,
-      weight: parseFloat(weight),
+      weight,
       description,
       status: 'Pending'
     }]);
