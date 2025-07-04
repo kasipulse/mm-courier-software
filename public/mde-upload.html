@@ -41,7 +41,9 @@
 </head>
 <body>
   <h1>📤 Upload FedEx MDE File</h1>
-  <form id="uploadForm">
+
+  <!-- ✅ FORM with action and enctype -->
+  <form id="uploadForm" action="/api/to/mde-upload" method="POST" enctype="multipart/form-data">
     <input type="file" name="mdeFile" id="mdeFile" accept=".txt,.xml" required />
     <button type="submit">Upload MDE File</button>
   </form>
@@ -55,6 +57,7 @@
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       result.textContent = 'Uploading...';
+      result.className = '';
 
       const formData = new FormData();
       const fileInput = document.getElementById('mdeFile');
