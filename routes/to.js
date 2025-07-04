@@ -77,4 +77,66 @@ router.post('/mde-upload', upload.single('mdeFile'), async (req, res) => {
   }
 });
 
+
+// 🧪 Step 3.1: Generate FedEx XML for a Parcel
+router.get('/generate-test-xml/:trackingNumber', async (req, res) => {
+  const trackingNumber = req.params.trackingNumber;
+
+  const { data, error } = await supabase
+    .from('parcels')
+    .select('*')
+    .eq('tracking_number', trackingNumber)
+    .single();
+
+  if (error || !data) {
+    return res.status(404).json({ success: false, message: 'Parcel not found' });
+  }
+
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+
+  const xml = `
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v1="http://fedex.com/ws/uploadscan/v1">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <v1:UploadScanRequest>
+      <v1:WebAuthenticationDetail>
+        <v1:UserCredential>
+          <v1:Key>${process.env.FEDEX_KEY || 'YOUR_FEDEX_KEY'}</v1:Key>
+          <v1:Password>${process.env.FEDEX_PASSWORD || 'YOUR_FEDEX_PASSWORD'}</v1:Password>
+        </v1:UserCredential>
+      </v1:WebAuthenticationDetail>
+      <v1:Version>
+        <v1:ServiceId>uploadscanservice</v1:ServiceId>
+        <v1:Major>1</v1:Major>
+        <v1:Intermediate>1</v1:Intermediate>
+        <v1:Minor>0</v1:Minor>
+      </v1:Version>
+      <v1:MasterList>
+        <track-type>20</track-type>
+        <device-id>ZAJNBO0003</device-id>
+        <track-date>${pad(now.getMonth() + 1)}${pad(now.getDate())}</track-date>
+        <track-location-code>ALJB</track-location-code>
+        <employee-number>5011892</employee-number>
+        <track-begin-function-time>1100</track-begin-function-time>
+        <track-end-function-time>1100</track-end-function-time>
+        <airbill-time>1100</airbill-time>
+        <delivery-route-number>100</delivery-route-number>
+        <track-item-number>${data.tracking_number}</track-item-number>
+        <airbill-type-code>1</airbill-type-code>
+        <received-by-name>${data.recipient_name || 'N/A'}</received-by-name>
+        <edr-sig-rec-nbr>TESTSIGNATURE</edr-sig-rec-nbr>
+        <edr-line-nbr>44</edr-line-nbr>
+        <edr-del-address>${data.delivery_address || 'N/A'}</edr-del-address>
+        <tracking-item-form-cd>${data.form_type || '0000'}</tracking-item-form-cd>
+        <comments>${data.description || 'No comment'}</comments>
+      </v1:MasterList>
+    </v1:UploadScanRequest>
+  </soapenv:Body>
+</soapenv:Envelope>`.trim();
+
+  res.set('Content-Type', 'application/xml');
+  res.send(xml);
+});
+
 module.exports = router;
