@@ -1,46 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>MDE Upload | MM Courier</title>
+  <meta charset="UTF-8" />
+  <title>FedEx MDE Upload | MM Courier</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body { font-family: Arial, sans-serif; padding: 30px; background: #f4f4f4; }
-    form { max-width: 500px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; }
-    label { display: block; margin-bottom: 8px; }
-    input[type="file"], button { width: 100%; padding: 10px; margin-top: 10px; }
-    #status { text-align: center; margin-top: 20px; font-weight: bold; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f4f4f4;
+      max-width: 500px;
+      margin: auto;
+    }
+    h1 {
+      color: #0a2b52;
+      text-align: center;
+      font-size: 24px;
+    }
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+    input[type="file"],
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      font-size: 16px;
+    }
+    #result {
+      margin-top: 15px;
+      text-align: center;
+      font-weight: bold;
+    }
     .success { color: green; }
     .error { color: red; }
   </style>
 </head>
 <body>
-  <form id="mdeForm" enctype="multipart/form-data">
-    <h2>📤 Upload FedEx MDE File</h2>
-    <label>Select .mde or .txt File</label>
-    <input type="file" name="mdeFile" accept=".txt,.mde,.xml" required>
-    <button type="submit">Upload</button>
-    <div id="status"></div>
+  <h1>📤 Upload FedEx MDE File</h1>
+  <form id="uploadForm">
+    <input type="file" name="mdeFile" id="mdeFile" accept=".txt,.xml" required />
+    <button type="submit">Upload MDE File</button>
   </form>
 
+  <div id="result"></div>
+
   <script>
-    document.getElementById("mdeForm").addEventListener("submit", async (e) => {
+    const form = document.getElementById('uploadForm');
+    const result = document.getElementById('result');
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const form = e.target;
-      const formData = new FormData(form);
-      const status = document.getElementById("status");
+      result.textContent = 'Uploading...';
+
+      const formData = new FormData();
+      const fileInput = document.getElementById('mdeFile');
+
+      if (!fileInput.files.length) {
+        result.textContent = '❌ Please choose a file.';
+        result.className = 'error';
+        return;
+      }
+
+      formData.append('mdeFile', fileInput.files[0]);
 
       try {
-        const response = await fetch("/api/to/mde-upload", {
-          method: "POST",
-          body: formData
+        const response = await fetch('/api/to/mde-upload', {
+          method: 'POST',
+          body: formData,
         });
 
         const data = await response.json();
-        status.textContent = data.message;
-        status.className = data.success ? "success" : "error";
+
+        if (data.success) {
+          result.textContent = `✅ ${data.message}`;
+          result.className = 'success';
+          fileInput.value = '';
+        } else {
+          result.textContent = `❌ ${data.message}`;
+          result.className = 'error';
+        }
       } catch (err) {
-        status.textContent = "❌ Upload failed: " + err.message;
-        status.className = "error";
+        result.textContent = '❌ Upload failed. Please check connection.';
+        result.className = 'error';
       }
     });
   </script>
