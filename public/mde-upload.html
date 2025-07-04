@@ -2,50 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>FedEx MDE Upload | MM Courier</title>
+  <title>MDE Upload | MM Courier</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #f4f4f4;
-      max-width: 500px;
-      margin: auto;
-    }
-    h1 {
-      color: #0a2b52;
-      text-align: center;
-      font-size: 24px;
-    }
-    form {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      margin-top: 20px;
-    }
-    input[type="file"],
-    button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 10px;
-      font-size: 16px;
-    }
-    #result {
-      margin-top: 15px;
-      text-align: center;
-      font-weight: bold;
-    }
+    body { font-family: Arial; padding: 20px; background: #f4f4f4; max-width: 500px; margin: auto; }
+    h1 { color: #0a2b52; text-align: center; font-size: 22px; }
+    form { background: white; padding: 20px; border-radius: 8px; }
+    input, button { width: 100%; padding: 10px; margin-top: 10px; font-size: 16px; }
+    #result { margin-top: 15px; text-align: center; font-weight: bold; }
     .success { color: green; }
     .error { color: red; }
   </style>
 </head>
 <body>
-  <h1>📤 Upload FedEx MDE File</h1>
+  <h1>📤 FedEx MDE Upload</h1>
 
-  <!-- ✅ FORM with action and enctype -->
-  <form id="uploadForm" action="/api/to/mde-upload" method="POST" enctype="multipart/form-data">
-    <input type="file" name="mdeFile" id="mdeFile" accept=".txt,.xml" required />
-    <button type="submit">Upload MDE File</button>
+  <form id="uploadForm">
+    <input type="file" name="mdeFile" id="mdeFile" accept=".xml,.txt" required />
+    <button type="submit">Upload</button>
   </form>
 
   <div id="result"></div>
@@ -63,7 +37,7 @@
       const fileInput = document.getElementById('mdeFile');
 
       if (!fileInput.files.length) {
-        result.textContent = '❌ Please choose a file.';
+        result.textContent = '❌ Choose a file.';
         result.className = 'error';
         return;
       }
@@ -73,21 +47,15 @@
       try {
         const response = await fetch('/api/to/mde-upload', {
           method: 'POST',
-          body: formData,
+          body: formData
         });
 
         const data = await response.json();
-
-        if (data.success) {
-          result.textContent = `✅ ${data.message}`;
-          result.className = 'success';
-          fileInput.value = '';
-        } else {
-          result.textContent = `❌ ${data.message}`;
-          result.className = 'error';
-        }
+        result.textContent = data.message;
+        result.className = data.success ? 'success' : 'error';
+        fileInput.value = '';
       } catch (err) {
-        result.textContent = '❌ Upload failed. Please check connection.';
+        result.textContent = '❌ Upload failed. Server error.';
         result.className = 'error';
       }
     });
