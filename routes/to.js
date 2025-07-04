@@ -10,7 +10,7 @@ const upload = multer();
 // Connect to Supabase
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
-// MDE Upload Route
+// ✅ MDE Upload Route (from FedEx handhelds)
 router.post('/mde-upload', upload.single('mdeFile'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ success: false, message: 'No file uploaded' });
@@ -77,8 +77,7 @@ router.post('/mde-upload', upload.single('mdeFile'), async (req, res) => {
   }
 });
 
-
-// 🧪 Step 3.1: Generate FedEx XML for a Parcel
+// ✅ Step 3.1: Generate FedEx-compliant test scan XML
 router.get('/generate-test-xml/:trackingNumber', async (req, res) => {
   const trackingNumber = req.params.trackingNumber;
 
