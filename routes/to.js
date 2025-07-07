@@ -137,7 +137,10 @@ router.post('/send-fedex-scan/:trackingNumber/:scanType', async (req, res) => {
 router.post('/api/auth/login', async (req, res) => {
   const { username, password } = req.body;
 
+  console.log('🧪 Login attempt:', { username, password });
+
   if (!username || !password) {
+    console.log('❌ Missing username or password');
     return res.status(400).json({ message: 'Missing username or password' });
   }
 
@@ -147,14 +150,20 @@ router.post('/api/auth/login', async (req, res) => {
     .eq('username', username)
     .single();
 
+  console.log('🔍 Supabase lookup result:', { data, error });
+
   if (error || !data) {
+    console.log('❌ Driver not found or Supabase error');
     return res.status(401).json({ message: 'Invalid username or password' });
   }
 
-  // 🔓 Plain text match (TEMPORARY)
+  // 🔓 Plain text match (TEMPORARY - NO HASHING)
   if (password !== data.password) {
+    console.log(`❌ Password mismatch: input="${password}", db="${data.password}"`);
     return res.status(401).json({ message: 'Invalid username or password' });
   }
+
+  console.log('✅ Login successful for:', username);
 
   res.json({
     success: true,
