@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const fetch = require('node-fetch');
+const bcrypt = require('bcrypt'); // ✅ Required for password checking
 const { createClient } = require('@supabase/supabase-js');
 
 // Supabase connection
@@ -10,7 +11,6 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY
 router.post('/send-fedex-scan/:trackingNumber/:scanType', async (req, res) => {
   const { trackingNumber, scanType } = req.params;
 
-  // 🔍 Look up parcel by tracking number
   const { data, error } = await supabase
     .from('parcels')
     .select('*')
@@ -26,7 +26,6 @@ router.post('/send-fedex-scan/:trackingNumber/:scanType', async (req, res) => {
   const dateStr = `${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
   const timeStr = '1100';
 
-  // 🧠 Configure fields per scan type
   let trackType = '20';
   let extraFields = '';
 
@@ -65,7 +64,7 @@ router.post('/send-fedex-scan/:trackingNumber/:scanType', async (req, res) => {
       `;
       break;
 
-    default: // POD
+    default:
       extraFields = `
         <received-by-name>${data.recipient_name || 'N/A'}</received-by-name>
         <edr-sig-rec-nbr>TESTSIGNATURE</edr-sig-rec-nbr>
@@ -75,7 +74,6 @@ router.post('/send-fedex-scan/:trackingNumber/:scanType', async (req, res) => {
       break;
   }
 
-  // 🧾 Build XML
   const xml = `
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v1="http://fedex.com/ws/uploadscan/v1">
   <soapenv:Header/>
@@ -134,6 +132,41 @@ router.post('/send-fedex-scan/:trackingNumber/:scanType', async (req, res) => {
     console.error('❌ FedEx Upload Error:', err.message);
     res.status(500).json({ success: false, message: `Error uploading ${scanType}` });
   }
+});
+
+// 🔐 DRIVER LOGIN: /api/auth/login
+router.post('/api/auth/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ message: 'Missing username or password' });
+  }
+
+  const { data, error } = await supabase
+    .from('drivers')
+    .select('*')
+    .eq('username', username)
+    .single();
+
+  if (error || !data) {
+    return res.status(401).json({ message: 'Invalid username or password' });
+  }
+
+  const isMatch = await bcrypt.compare(password, data.password);
+
+  if (!isMatch) {
+    return res.status(401).json({ message: 'Invalid username or password' });
+  }
+
+  res.json({
+    success: true,
+    message: 'Login successful',
+    driver: {
+      id: data.uuid,
+      name: data.driver_name,
+      route: data.route_number
+    }
+  });
 });
 
 module.exports = router;
