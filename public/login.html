@@ -82,31 +82,53 @@
       margin-top: 15px;
     }
 
-    @media screen and (max-width: 480px) {
-      .login-container {
-        margin: 0 15px;
-        padding: 25px 20px;
-      }
-
-      button {
-        padding: 14px;
-      }
+    .error-message {
+      color: red;
+      margin-top: 10px;
+      text-align: center;
     }
   </style>
 </head>
 <body>
   <div class="login-container">
     <h2>Driver Login</h2>
-    <form method="POST" action="/api/auth/login">
+    <form id="login-form">
       <label for="username">Username</label>
-      <input type="text" name="username" id="username" required />
+      <input type="text" id="username" required />
 
       <label for="password">Password</label>
-      <input type="password" name="password" id="password" required />
+      <input type="password" id="password" required />
 
       <button type="submit">Sign In</button>
     </form>
+    <p class="error-message" id="error-message"></p>
     <p class="footer-text">© MM Courier | Powered by Pakisa Logistics</p>
   </div>
+
+  <script>
+    document.getElementById('login-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+
+      const result = await res.json();
+
+      if (res.ok) {
+        // ✅ Login success - redirect to trip sheet or dashboard
+        alert('Login successful. Welcome ' + result.driver.name);
+        window.location.href = `/tripsheet.html?driver=${encodeURIComponent(result.driver.name)}&route=${encodeURIComponent(result.driver.route)}`;
+      } else {
+        // ❌ Show error
+        document.getElementById('error-message').textContent = result.message || 'Login failed.';
+      }
+    });
+  </script>
 </body>
 </html>
