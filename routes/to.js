@@ -1,9 +1,16 @@
+const express = require('express');
+const router = express.Router();
 const fetch = require('node-fetch');
+const { createClient } = require('@supabase/supabase-js');
+
+// Supabase connection
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
 // 🚚 POST: Upload any scan to FedEx (POD or DEX)
 router.post('/send-fedex-scan/:trackingNumber/:scanType', async (req, res) => {
   const { trackingNumber, scanType } = req.params;
 
+  // 🔍 Look up parcel by tracking number
   const { data, error } = await supabase
     .from('parcels')
     .select('*')
@@ -19,52 +26,56 @@ router.post('/send-fedex-scan/:trackingNumber/:scanType', async (req, res) => {
   const dateStr = `${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
   const timeStr = '1100';
 
-  // 🧠 Dynamic values for DEX types
+  // 🧠 Configure fields per scan type
   let trackType = '20';
-  let exceptionCode = '';
   let extraFields = '';
 
-  if (scanType === 'DEX03') {
-    trackType = '30';
-    exceptionCode = '03';
-    extraFields = `
-      <track-exception-code>03</track-exception-code>
-      <recipient-name>${data.recipient_name}</recipient-name>
-      <recipient-address-desc>${data.delivery_address}</recipient-address-desc>
-      <delivered-address-desc>${data.delivery_address}</delivered-address-desc>
-      <shipper-name>MM Courier</shipper-name>
-    `;
-  } else if (scanType === 'DEX07') {
-    trackType = '30';
-    exceptionCode = '07';
-    extraFields = `
-      <track-exception-code>07</track-exception-code>
-      <recipient-company-name>MM Courier</recipient-company-name>
-      <recipient-name>${data.recipient_name}</recipient-name>
-      <recipient-address-desc>${data.delivery_address}</recipient-address-desc>
-      <reason-refused>Damaged</reason-refused>
-      <shipper-name>MM Courier</shipper-name>
-    `;
-  } else if (scanType === 'DEX08') {
-    trackType = '30';
-    exceptionCode = '08';
-    extraFields = `
-      <track-exception-code>08</track-exception-code>
-      <recipient-address-desc>${data.delivery_address}</recipient-address-desc>
-      <reattempted-delivery-time>${timeStr}</reattempted-delivery-time>
-      <delivery-date>${dateStr}</delivery-date>
-      <station-eta-time>1700</station-eta-time>
-    `;
-  } else {
-    // POD
-    extraFields = `
-      <received-by-name>${data.recipient_name || 'N/A'}</received-by-name>
-      <edr-sig-rec-nbr>TESTSIGNATURE</edr-sig-rec-nbr>
-      <edr-line-nbr>44</edr-line-nbr>
-      <edr-del-address>${data.delivery_address || 'N/A'}</edr-del-address>
-    `;
+  switch (scanType) {
+    case 'DEX03':
+      trackType = '30';
+      extraFields = `
+        <track-exception-code>03</track-exception-code>
+        <recipient-name>${data.recipient_name}</recipient-name>
+        <recipient-address-desc>${data.delivery_address}</recipient-address-desc>
+        <delivered-address-desc>${data.delivery_address}</delivered-address-desc>
+        <shipper-name>MM Courier</shipper-name>
+      `;
+      break;
+
+    case 'DEX07':
+      trackType = '30';
+      extraFields = `
+        <track-exception-code>07</track-exception-code>
+        <recipient-company-name>MM Courier</recipient-company-name>
+        <recipient-name>${data.recipient_name}</recipient-name>
+        <recipient-address-desc>${data.delivery_address}</recipient-address-desc>
+        <reason-refused>Damaged</reason-refused>
+        <shipper-name>MM Courier</shipper-name>
+      `;
+      break;
+
+    case 'DEX08':
+      trackType = '30';
+      extraFields = `
+        <track-exception-code>08</track-exception-code>
+        <recipient-address-desc>${data.delivery_address}</recipient-address-desc>
+        <reattempted-delivery-time>${timeStr}</reattempted-delivery-time>
+        <delivery-date>${dateStr}</delivery-date>
+        <station-eta-time>1700</station-eta-time>
+      `;
+      break;
+
+    default: // POD
+      extraFields = `
+        <received-by-name>${data.recipient_name || 'N/A'}</received-by-name>
+        <edr-sig-rec-nbr>TESTSIGNATURE</edr-sig-rec-nbr>
+        <edr-line-nbr>44</edr-line-nbr>
+        <edr-del-address>${data.delivery_address || 'N/A'}</edr-del-address>
+      `;
+      break;
   }
 
+  // 🧾 Build XML
   const xml = `
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v1="http://fedex.com/ws/uploadscan/v1">
   <soapenv:Header/>
@@ -124,3 +135,5 @@ router.post('/send-fedex-scan/:trackingNumber/:scanType', async (req, res) => {
     res.status(500).json({ success: false, message: `Error uploading ${scanType}` });
   }
 });
+
+module.exports = router;
