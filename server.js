@@ -12,8 +12,10 @@ const toRoutes = require('./routes/to');                  // ✅ MDE upload rout
 dotenv.config();
 
 const app = express(); // ✅ initialize app FIRST
+
 app.use(cors());
-app.use(express.json());
+app.use(express.json()); // ✅ For JSON requests
+app.use(express.urlencoded({ extended: true })); // ✅ Required for HTML form data
 
 // ✅ Serve static files from "public" folder
 app.use(express.static(path.join(__dirname, 'public')));
