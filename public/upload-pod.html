@@ -2,119 +2,98 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Upload POD</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>POD Upload | MM Courier</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      padding: 2rem;
-      max-width: 400px;
-      margin: auto;
+      background: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
     }
-
-    h2 {
-      text-align: center;
-      color: #0a2b52;
-    }
-
-    form {
-      background: #fff;
-      padding: 1.5rem;
+    .container {
+      background: white;
+      padding: 20px;
       border-radius: 8px;
-      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.1);
+      text-align: center;
     }
-
-    input[type="text"],
+    h2 {
+      color: #0a2b52;
+      margin-bottom: 20px;
+    }
     input[type="file"] {
-      width: 100%;
-      margin: 0.5rem 0 1rem;
-      padding: 0.75rem;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+      margin: 15px 0;
     }
-
+    img {
+      max-width: 100%;
+      margin-top: 10px;
+    }
     button {
-      width: 100%;
-      padding: 0.75rem;
       background: #409dbc;
-      color: #fff;
+      color: white;
+      padding: 10px 20px;
       border: none;
       border-radius: 4px;
-      font-weight: bold;
       cursor: pointer;
     }
-
     button:hover {
-      background: #327c98;
-    }
-
-    .message {
-      margin-top: 1rem;
-      text-align: center;
-      font-weight: bold;
-    }
-
-    .success {
-      color: green;
-    }
-
-    .error {
-      color: red;
+      background: #0a2b52;
     }
   </style>
 </head>
 <body>
-  <h2>Upload POD</h2>
-
-  <form id="podForm">
-    <label for="parcelId">Parcel ID</label>
-    <input type="text" id="parcelId" name="parcelId" placeholder="Enter Parcel ID" required />
-
-    <label for="pod">Proof of Delivery (Image)</label>
-    <input type="file" id="pod" name="pod" accept="image/*" required />
-
-    <button type="submit">Upload POD</button>
-  </form>
-
-  <div class="message" id="message"></div>
+  <div class="container">
+    <h2>Upload POD</h2>
+    <p id="parcel-id-label">Parcel ID: <strong id="parcelId"></strong></p>
+    <input type="file" id="fileInput" accept="image/*" />
+    <br/>
+    <button onclick="uploadPOD()">Upload POD</button>
+    <div id="preview"></div>
+  </div>
 
   <script>
-    document.getElementById('podForm').addEventListener('submit', async function (e) {
-      e.preventDefault();
+    const params = new URLSearchParams(window.location.search);
+    const parcelId = params.get('id');
+    document.getElementById('parcelId').textContent = parcelId;
 
-      const parcelId = document.getElementById('parcelId').value;
-      const file = document.getElementById('pod').files[0];
+    const fileInput = document.getElementById('fileInput');
+    const preview = document.getElementById('preview');
 
-      if (!parcelId || !file) {
-        return showMessage('Please provide both Parcel ID and image', 'error');
-      }
-
-      const formData = new FormData();
-      formData.append('pod', file);
-
-      try {
-        const res = await fetch(`/api/to/upload-pod/${parcelId}`, {
-          method: 'POST',
-          body: formData
-        });
-
-        const result = await res.json();
-
-        if (result.success) {
-          showMessage('✅ POD uploaded successfully!', 'success');
-        } else {
-          showMessage(`❌ Upload failed: ${result.message}`, 'error');
-        }
-      } catch (err) {
-        showMessage(`❌ Error: ${err.message}`, 'error');
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          preview.innerHTML = `<img src="${reader.result}" alt="Preview" />`;
+        };
+        reader.readAsDataURL(file);
       }
     });
 
-    function showMessage(msg, type) {
-      const messageEl = document.getElementById('message');
-      messageEl.textContent = msg;
-      messageEl.className = `message ${type}`;
+    async function uploadPOD() {
+      const file = fileInput.files[0];
+      if (!file) return alert('Please select a file');
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch(`/api/to/upload-pod/${parcelId}`, {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await res.json();
+      if (result.success) {
+        alert('✅ POD uploaded');
+        window.location.href = `/tripsheet.html?driver=${result.driverId}`;
+      } else {
+        alert('❌ Upload failed');
+      }
     }
   </script>
 </body>
