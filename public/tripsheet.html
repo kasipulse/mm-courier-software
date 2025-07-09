@@ -37,6 +37,13 @@
 
 assigned.forEach(parcel => {
   const row = tableBody.insertRow();
+
+  const podCell = parcel.pod_url
+    ? `<a href="${parcel.pod_url}" target="_blank" title="View POD">✅</a>`
+    : `<a href="/upload-pod.html?parcelId=${parcel.id}">
+         <button style="padding: 4px 8px; font-size: 12px;">Upload POD</button>
+       </a>`;
+
   row.innerHTML = `
     <td>${parcel.waybill_number || '-'}</td>
     <td>${parcel.tracking_number}</td>
@@ -44,11 +51,7 @@ assigned.forEach(parcel => {
     <td>${parcel.content || '-'}</td>
     <td>${parcel.status}</td>
     <td>${parcel.received_date ? parcel.received_date.slice(0, 10) : '-'}</td>
-    <td>
-      <a href="/upload-pod.html?parcelId=${parcel.id}">
-        <button style="padding: 4px 8px; font-size: 12px;">Upload POD</button>
-      </a>
-    </td>
+    <td>${podCell}</td>
   `;
 });
 
