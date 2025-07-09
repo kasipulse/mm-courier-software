@@ -1,134 +1,19 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>MM Courier | Trip Sheet</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    :root {
-      --gold: #cebd80;
-      --navy: #0a2b52;
-      --blue: #409dbc;
-      --white: #ffffff;
-    }
+<!-- keep your full <html> and <head> section as is -->
 
-    body {
-      font-family: Arial, sans-serif;
-      background-color: var(--white);
-      color: var(--navy);
-      margin: 0;
-      padding: 0;
-    }
+<!-- inside your <table> thead -->
+<thead>
+  <tr>
+    <th>Waybill</th>
+    <th>Tracking #</th>
+    <th>Customer</th>
+    <th>Content</th>
+    <th>Status</th>
+    <th>Received Date</th>
+    <th>POD</th> <!-- 👈 Added POD column -->
+  </tr>
+</thead>
 
-    header {
-      background-color: var(--navy);
-      color: var(--white);
-      padding: 20px;
-      text-align: center;
-    }
-
-    header img {
-      height: 60px;
-      margin-bottom: 10px;
-    }
-
-    .company-info {
-      font-size: 14px;
-      margin-top: 5px;
-    }
-
-    .container {
-      padding: 20px;
-      max-width: 900px;
-      margin: auto;
-    }
-
-    h2 {
-      color: var(--navy);
-      margin-top: 0;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      font-size: 14px;
-    }
-
-    table, th, td {
-      border: 1px solid var(--blue);
-    }
-
-    th {
-      background-color: var(--blue);
-      color: white;
-      padding: 10px;
-    }
-
-    td {
-      padding: 8px;
-      text-align: center;
-    }
-
-    .logout-btn {
-      float: right;
-      margin-top: -50px;
-      background-color: var(--gold);
-      color: var(--navy);
-      border: none;
-      padding: 8px 12px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    .logout-btn:hover {
-      background-color: #e3d49b;
-    }
-  </style>
-</head>
-<body>
-
-<script>
-  // Redirect to login if not authenticated
-  if (localStorage.getItem('mmcourier_loggedin') !== 'true') {
-    window.location.href = '/login.html';
-  }
-
-  // Load driver name
-  const driverName = localStorage.getItem('mmcourier_driver') || 'Driver';
-</script>
-
-<header>
-  <img src="https://res.cloudinary.com/dwxgkbuln/image/upload/v1750675472/pakisa_logistics_express_pty_ltd_logo-removebg-preview_kbuvzs.png" alt="MM Courier Logo">
-  <div class="company-info">
-    <strong>Pakisa Logistics Express (Pty) Ltd</strong><br>
-    10 Burry Koean Street, Jet Park, Boksburg, 1469<br>
-    Website: <a href="https://www.pakisalogistics.co.za" style="color: #cebd80;">www.pakisalogistics.co.za</a> |
-    Email: ops1@pakisalogistics.co.za |
-    Tel: 011 397 1151
-  </div>
-</header>
-
-<div class="container">
-  <button class="logout-btn" onclick="logout()">Logout</button>
-  <h2>Trip Sheet for <span id="driverName">...</span></h2>
-
-  <table id="tripSheetTable">
-    <thead>
-      <tr>
-        <th>Waybill</th>
-        <th>Tracking #</th>
-        <th>Customer</th>
-        <th>Content</th>
-        <th>Status</th>
-        <th>Received Date</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Populated by JS -->
-    </tbody>
-  </table>
-</div>
+<!-- update JS below inside <script> -->
 
 <script>
   document.getElementById('driverName').textContent = driverName;
@@ -145,8 +30,9 @@
       if (assigned.length === 0) {
         const row = tableBody.insertRow();
         const cell = row.insertCell();
-        cell.colSpan = 6;
+        cell.colSpan = 7;
         cell.textContent = 'No parcels assigned.';
+        return;
       }
 
       assigned.forEach(parcel => {
@@ -158,6 +44,11 @@
           <td>${parcel.content || '-'}</td>
           <td>${parcel.status}</td>
           <td>${parcel.received_date ? parcel.received_date.slice(0, 10) : '-'}</td>
+          <td>
+            ${parcel.pod_url ? 
+              `<a href="${parcel.pod_url}" target="_blank">View POD</a>` : 
+              `<a href="/upload-pod.html?parcelId=${parcel.id}">Upload POD</a>`}
+          </td>
         `;
       });
     } catch (err) {
@@ -173,6 +64,3 @@
 
   fetchTrips();
 </script>
-
-</body>
-</html>
