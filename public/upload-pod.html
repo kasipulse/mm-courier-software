@@ -1,100 +1,65 @@
+<!-- public/upload-pod.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>POD Upload | MM Courier</title>
+  <title>Upload POD</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    .container {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      width: 100%;
-      max-width: 400px;
-      box-shadow: 0 0 12px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-    h2 {
-      color: #0a2b52;
-      margin-bottom: 20px;
-    }
-    input[type="file"] {
-      margin: 15px 0;
-    }
-    img {
-      max-width: 100%;
-      margin-top: 10px;
-    }
-    button {
-      background: #409dbc;
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #0a2b52;
-    }
+    body { font-family: Arial; padding: 20px; }
+    input, button { display: block; margin: 10px 0; padding: 10px; width: 100%; }
+    img { max-width: 100%; margin-top: 10px; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Upload POD</h2>
-    <p id="parcel-id-label">Parcel ID: <strong id="parcelId"></strong></p>
-    <input type="file" id="fileInput" accept="image/*" />
-    <br/>
-    <button onclick="uploadPOD()">Upload POD</button>
-    <div id="preview"></div>
-  </div>
+  <h2>📦 Upload POD</h2>
+  <form id="podForm">
+    <label>Parcel ID</label>
+    <input type="text" id="parcelId" name="parcelId" readonly required />
+
+    <label>Select POD Image</label>
+    <input type="file" id="podFile" name="pod" accept="image/*" required />
+    
+    <img id="preview" src="#" alt="Preview" style="display:none;" />
+
+    <button type="submit">Upload</button>
+  </form>
 
   <script>
     const params = new URLSearchParams(window.location.search);
-    const parcelId = params.get('id');
-    document.getElementById('parcelId').textContent = parcelId;
+    const parcelId = params.get('parcelId');
+    document.getElementById('parcelId').value = parcelId;
 
-    const fileInput = document.getElementById('fileInput');
+    const podFile = document.getElementById('podFile');
     const preview = document.getElementById('preview');
 
-    fileInput.addEventListener('change', () => {
-      const file = fileInput.files[0];
+    podFile.addEventListener('change', () => {
+      const file = podFile.files[0];
       if (file) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          preview.innerHTML = `<img src="${reader.result}" alt="Preview" />`;
-        };
-        reader.readAsDataURL(file);
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = 'block';
       }
     });
 
-    async function uploadPOD() {
-      const file = fileInput.files[0];
-      if (!file) return alert('Please select a file');
+    document.getElementById('podForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
 
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('pod', podFile.files[0]);
 
-      const res = await fetch(`/api/to/upload-pod/${parcelId}`, {
+      const response = await fetch(`/api/to/upload-pod/${parcelId}`, {
         method: 'POST',
         body: formData
       });
 
-      const result = await res.json();
+      const result = await response.json();
       if (result.success) {
         alert('✅ POD uploaded');
-        window.location.href = `/tripsheet.html?driver=${result.driverId}`;
+        window.location.href = '/tripsheet.html';
       } else {
-        alert('❌ Upload failed');
+        alert('❌ Upload failed: ' + result.message);
       }
-    }
+    });
   </script>
 </body>
 </html>
