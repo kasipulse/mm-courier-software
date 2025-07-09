@@ -141,13 +141,14 @@ router.post('/send-fedex-scan/:trackingNumber/:scanType', async (req, res) => {
   }
 });
 
-// 🔐 Driver Login
+// 🔐 DRIVER LOGIN: Password disabled for testing
 router.post('/api/auth/login', async (req, res) => {
-  const { username, password } = req.body;
-  console.log('🧪 Login attempt:', { username, password });
+  const { username } = req.body;
 
-  if (!username || !password) {
-    return res.status(400).json({ message: 'Missing username or password' });
+  console.log('🧪 Login attempt with username only:', username);
+
+  if (!username) {
+    return res.status(400).json({ message: 'Missing username' });
   }
 
   const { data, error } = await supabase
@@ -158,9 +159,9 @@ router.post('/api/auth/login', async (req, res) => {
 
   console.log('🔍 Supabase response:', { data, error });
 
-  if (error || !data || password !== data.password) {
+  if (error || !data) {
     console.log('❌ Invalid login attempt');
-    return res.status(401).json({ message: 'Invalid username or password' });
+    return res.status(401).json({ message: 'Invalid username' });
   }
 
   console.log('✅ Login successful');
