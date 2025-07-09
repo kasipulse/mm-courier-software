@@ -141,7 +141,7 @@ router.post('/send-fedex-scan/:trackingNumber/:scanType', async (req, res) => {
   }
 });
 
-// 🔐 Driver Login (plaintext for now, with debug logs)
+// 🔐 Driver Login
 router.post('/api/auth/login', async (req, res) => {
   const { username, password } = req.body;
   console.log('🧪 Login attempt:', { username, password });
@@ -175,7 +175,7 @@ router.post('/api/auth/login', async (req, res) => {
   });
 });
 
-// 📸 Upload POD (with Cloudinary)
+// 📸 POD Upload
 router.post('/upload-pod/:parcelId', upload.single('pod'), async (req, res) => {
   const parcelId = req.params.parcelId;
   const file = req.file;
