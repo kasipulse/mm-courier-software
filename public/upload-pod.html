@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upload POD</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      padding: 2rem;
+      max-width: 400px;
+      margin: auto;
+    }
+
+    h2 {
+      text-align: center;
+      color: #0a2b52;
+    }
+
+    form {
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+
+    input[type="text"],
+    input[type="file"] {
+      width: 100%;
+      margin: 0.5rem 0 1rem;
+      padding: 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      background: #409dbc;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #327c98;
+    }
+
+    .message {
+      margin-top: 1rem;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .success {
+      color: green;
+    }
+
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <h2>Upload POD</h2>
+
+  <form id="podForm">
+    <label for="parcelId">Parcel ID</label>
+    <input type="text" id="parcelId" name="parcelId" placeholder="Enter Parcel ID" required />
+
+    <label for="pod">Proof of Delivery (Image)</label>
+    <input type="file" id="pod" name="pod" accept="image/*" required />
+
+    <button type="submit">Upload POD</button>
+  </form>
+
+  <div class="message" id="message"></div>
+
+  <script>
+    document.getElementById('podForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const parcelId = document.getElementById('parcelId').value;
+      const file = document.getElementById('pod').files[0];
+
+      if (!parcelId || !file) {
+        return showMessage('Please provide both Parcel ID and image', 'error');
+      }
+
+      const formData = new FormData();
+      formData.append('pod', file);
+
+      try {
+        const res = await fetch(`/api/to/upload-pod/${parcelId}`, {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await res.json();
+
+        if (result.success) {
+          showMessage('✅ POD uploaded successfully!', 'success');
+        } else {
+          showMessage(`❌ Upload failed: ${result.message}`, 'error');
+        }
+      } catch (err) {
+        showMessage(`❌ Error: ${err.message}`, 'error');
+      }
+    });
+
+    function showMessage(msg, type) {
+      const messageEl = document.getElementById('message');
+      messageEl.textContent = msg;
+      messageEl.className = `message ${type}`;
+    }
+  </script>
+</body>
+</html>
