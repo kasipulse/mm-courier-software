@@ -1,65 +1,139 @@
-<!-- public/upload-pod.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Upload POD</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <title>Upload POD - MM Courier</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: Arial; padding: 20px; }
-    input, button { display: block; margin: 10px 0; padding: 10px; width: 100%; }
-    img { max-width: 100%; margin-top: 10px; }
+    :root {
+      --gold: #cebd80;
+      --navy: #0a2b52;
+      --blue: #409dbc;
+      --white: #ffffff;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: var(--white);
+      color: var(--navy);
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+
+    h2 {
+      margin-top: 10px;
+    }
+
+    .pod-preview {
+      margin: 20px 0;
+    }
+
+    .pod-preview img {
+      max-width: 100%;
+      height: auto;
+      border: 1px solid var(--blue);
+    }
+
+    input[type="file"] {
+      margin: 20px 0;
+    }
+
+    button {
+      background-color: var(--gold);
+      color: var(--navy);
+      padding: 10px 20px;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background-color: #e3d49b;
+    }
+
+    .status {
+      margin-top: 10px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
-  <h2>📦 Upload POD</h2>
+
+  <h2>Upload Proof of Delivery (POD)</h2>
+  <div id="podPreview" class="pod-preview"></div>
   <form id="podForm">
-    <label>Parcel ID</label>
-    <input type="text" id="parcelId" name="parcelId" readonly required />
-
-    <label>Select POD Image</label>
-    <input type="file" id="podFile" name="pod" accept="image/*" required />
-    
-    <img id="preview" src="#" alt="Preview" style="display:none;" />
-
-    <button type="submit">Upload</button>
+    <input type="file" id="podFile" name="pod" accept="image/*,application/pdf" required>
+    <br>
+    <button type="submit">Upload POD</button>
   </form>
+  <div id="status" class="status"></div>
 
   <script>
     const params = new URLSearchParams(window.location.search);
     const parcelId = params.get('parcelId');
-    document.getElementById('parcelId').value = parcelId;
+    const previewContainer = document.getElementById('podPreview');
+    const statusDiv = document.getElementById('status');
 
-    const podFile = document.getElementById('podFile');
-    const preview = document.getElementById('preview');
+    if (!parcelId) {
+      alert('Missing parcelId in query string');
+      window.location.href = '/tripsheet.html';
+    }
 
-    podFile.addEventListener('change', () => {
-      const file = podFile.files[0];
-      if (file) {
-        preview.src = URL.createObjectURL(file);
-        preview.style.display = 'block';
+    // Load existing POD preview if available
+    async function loadParcel() {
+      try {
+        const res = await fetch(`/api/parcels/${parcelId}`);
+        const data = await res.json();
+        if (data.pod_url) {
+          previewContainer.innerHTML = `
+            <p>Existing POD Preview:</p>
+            ${data.pod_url.endsWith('.pdf')
+              ? `<a href="${data.pod_url}" target="_blank">View PDF</a>`
+              : `<img src="${data.pod_url}" alt="POD Preview">`
+            }
+          `;
+        }
+      } catch (err) {
+        console.error('Error loading parcel:', err);
       }
-    });
+    }
 
+    // Upload form handler
     document.getElementById('podForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const fileInput = document.getElementById('podFile');
+      const file = fileInput.files[0];
+      if (!file) return;
 
       const formData = new FormData();
-      formData.append('pod', podFile.files[0]);
+      formData.append('pod', file);
 
-      const response = await fetch(`/api/to/upload-pod/${parcelId}`, {
-        method: 'POST',
-        body: formData
-      });
+      try {
+        const res = await fetch(`/upload-pod/${parcelId}`, {
+          method: 'POST',
+          body: formData
+        });
 
-      const result = await response.json();
-      if (result.success) {
-        alert('✅ POD uploaded');
-        window.location.href = '/tripsheet.html';
-      } else {
-        alert('❌ Upload failed: ' + result.message);
+        const result = await res.json();
+        if (result.success) {
+          statusDiv.textContent = '✅ POD uploaded successfully';
+          setTimeout(() => {
+            window.location.href = '/tripsheet.html';
+          }, 1200);
+        } else {
+          statusDiv.textContent = '❌ Upload failed: ' + (result.message || 'Unknown error');
+        }
+      } catch (err) {
+        console.error('Upload error:', err);
+        statusDiv.textContent = '❌ Upload failed';
       }
     });
+
+    loadParcel();
   </script>
+
 </body>
 </html>
