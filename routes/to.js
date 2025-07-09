@@ -2,11 +2,24 @@ const express = require('express');
 const router = express.Router();
 const fetch = require('node-fetch');
 const { createClient } = require('@supabase/supabase-js');
+const multer = require('multer');
+const { v2: cloudinary } = require('cloudinary');
+const streamifier = require('streamifier');
 
-// Supabase connection
+// 🔌 Supabase
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
-// 🚚 POST: Upload any scan to FedEx (POD or DEX)
+// 🔌 Cloudinary config
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD,
+  api_key: process.env.CLOUDINARY_KEY,
+  api_secret: process.env.CLOUDINARY_SECRET
+});
+
+// 📦 POD upload setup
+const upload = multer();
+
+// 🚚 Upload scan to FedEx (POD or DEX)
 router.post('/send-fedex-scan/:trackingNumber/:scanType', async (req, res) => {
   const { trackingNumber, scanType } = req.params;
 
@@ -39,7 +52,6 @@ router.post('/send-fedex-scan/:trackingNumber/:scanType', async (req, res) => {
         <shipper-name>MM Courier</shipper-name>
       `;
       break;
-
     case 'DEX07':
       trackType = '30';
       extraFields = `
@@ -51,7 +63,6 @@ router.post('/send-fedex-scan/:trackingNumber/:scanType', async (req, res) => {
         <shipper-name>MM Courier</shipper-name>
       `;
       break;
-
     case 'DEX08':
       trackType = '30';
       extraFields = `
@@ -62,7 +73,6 @@ router.post('/send-fedex-scan/:trackingNumber/:scanType', async (req, res) => {
         <station-eta-time>1700</station-eta-time>
       `;
       break;
-
     default:
       extraFields = `
         <received-by-name>${data.recipient_name || 'N/A'}</received-by-name>
@@ -110,10 +120,8 @@ router.post('/send-fedex-scan/:trackingNumber/:scanType', async (req, res) => {
   </soapenv:Body>
 </soapenv:Envelope>`.trim();
 
-  const url = 'https://wsbeta.fedex.com:443/web-services/uploadscan';
-
   try {
-    const response = await fetch(url, {
+    const response = await fetch('https://wsbeta.fedex.com:443/web-services/uploadscan', {
       method: 'POST',
       headers: { 'Content-Type': 'text/xml' },
       body: xml
@@ -133,14 +141,12 @@ router.post('/send-fedex-scan/:trackingNumber/:scanType', async (req, res) => {
   }
 });
 
-// 🔐 DRIVER LOGIN: /api/auth/login (bcrypt temporarily disabled)
+// 🔐 Driver Login (plaintext for now, with debug logs)
 router.post('/api/auth/login', async (req, res) => {
   const { username, password } = req.body;
-
   console.log('🧪 Login attempt:', { username, password });
 
   if (!username || !password) {
-    console.log('❌ Missing username or password');
     return res.status(400).json({ message: 'Missing username or password' });
   }
 
@@ -150,21 +156,14 @@ router.post('/api/auth/login', async (req, res) => {
     .eq('username', username)
     .single();
 
-  console.log('🔍 Supabase lookup result:', { data, error });
+  console.log('🔍 Supabase response:', { data, error });
 
-  if (error || !data) {
-    console.log('❌ Driver not found or Supabase error');
+  if (error || !data || password !== data.password) {
+    console.log('❌ Invalid login attempt');
     return res.status(401).json({ message: 'Invalid username or password' });
   }
 
-  // 🔓 Plain text match (TEMPORARY - NO HASHING)
-  if (password !== data.password) {
-    console.log(`❌ Password mismatch: input="${password}", db="${data.password}"`);
-    return res.status(401).json({ message: 'Invalid username or password' });
-  }
-
-  console.log('✅ Login successful for:', username);
-
+  console.log('✅ Login successful');
   res.json({
     success: true,
     message: 'Login successful',
@@ -174,6 +173,43 @@ router.post('/api/auth/login', async (req, res) => {
       route: data.route_number
     }
   });
+});
+
+// 📸 Upload POD (with Cloudinary)
+router.post('/upload-pod/:parcelId', upload.single('pod'), async (req, res) => {
+  const parcelId = req.params.parcelId;
+  const file = req.file;
+
+  if (!file) return res.status(400).json({ message: 'No file uploaded' });
+
+  const streamUpload = (buffer) => {
+    return new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream({ folder: 'mm-courier/pods' }, (error, result) => {
+        if (result) resolve(result);
+        else reject(error);
+      });
+      streamifier.createReadStream(buffer).pipe(stream);
+    });
+  };
+
+  try {
+    const result = await streamUpload(file.buffer);
+
+    const { error } = await supabase
+      .from('parcels')
+      .update({
+        pod_url: result.secure_url,
+        pod_uploaded_at: new Date().toISOString()
+      })
+      .eq('id', parcelId);
+
+    if (error) throw error;
+
+    res.json({ success: true, message: 'POD uploaded', url: result.secure_url });
+  } catch (err) {
+    console.error('❌ POD Upload Error:', err.message);
+    res.status(500).json({ success: false, message: 'Failed to upload POD', error: err.message });
+  }
 });
 
 module.exports = router;
