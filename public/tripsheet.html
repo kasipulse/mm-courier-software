@@ -35,22 +35,23 @@
         return;
       }
 
-      assigned.forEach(parcel => {
-        const row = tableBody.insertRow();
-        row.innerHTML = `
-          <td>${parcel.waybill_number || '-'}</td>
-          <td>${parcel.tracking_number}</td>
-          <td>${parcel.customer || '-'}</td>
-          <td>${parcel.content || '-'}</td>
-          <td>${parcel.status}</td>
-          <td>${parcel.received_date ? parcel.received_date.slice(0, 10) : '-'}</td>
-          <td>
-            ${parcel.pod_url ? 
-              `<a href="${parcel.pod_url}" target="_blank">View POD</a>` : 
-              `<a href="/upload-pod.html?parcelId=${parcel.id}">Upload POD</a>`}
-          </td>
-        `;
-      });
+assigned.forEach(parcel => {
+  const row = tableBody.insertRow();
+  row.innerHTML = `
+    <td>${parcel.waybill_number || '-'}</td>
+    <td>${parcel.tracking_number}</td>
+    <td>${parcel.customer || '-'}</td>
+    <td>${parcel.content || '-'}</td>
+    <td>${parcel.status}</td>
+    <td>${parcel.received_date ? parcel.received_date.slice(0, 10) : '-'}</td>
+    <td>
+      <a href="/upload-pod.html?parcelId=${parcel.id}">
+        <button style="padding: 4px 8px; font-size: 12px;">Upload POD</button>
+      </a>
+    </td>
+  `;
+});
+
     } catch (err) {
       console.error('Failed to fetch trip sheet', err);
     }
