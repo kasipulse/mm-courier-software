@@ -160,9 +160,12 @@ router.post('/api/auth/login', async (req, res) => {
   console.log('🔍 Supabase response:', { data, error });
 
   if (error || !data) {
-    console.log('❌ Invalid login attempt');
-    return res.status(401).json({ message: 'Invalid username' });
-  }
+  console.log('❌ Invalid login attempt – driver not found');
+  return res.status(401).json({ message: 'Driver not found' });
+}
+
+// ✅ Skip password check for now
+console.log('✅ Login successful (no password check)');
 
   console.log('✅ Login successful');
   res.json({
