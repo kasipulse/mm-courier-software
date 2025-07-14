@@ -3,86 +3,67 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Driver Login | MM Courier</title>
+  <title>Driver Login - MM Courier</title>
   <style>
-    :root {
-      --primary: #0a2b52;
-      --accent: #409dbc;
-      --highlight: #cebd80;
-      --light: #ffffff;
-      --bg: #f4f4f4;
-    }
-
-    * {
-      box-sizing: border-box;
-      font-family: 'Segoe UI', sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-
     body {
-      background-color: var(--bg);
+      font-family: Arial, sans-serif;
+      background-color: #f8f9fa;
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
       height: 100vh;
+      margin: 0;
     }
 
     .login-container {
-      background-color: var(--light);
-      padding: 30px 25px;
+      background-color: white;
+      padding: 30px;
       border-radius: 8px;
-      box-shadow: 0 0 12px rgba(0,0,0,0.1);
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
       width: 100%;
       max-width: 400px;
     }
 
-    .login-container h2 {
-      color: var(--primary);
+    h2 {
       text-align: center;
       margin-bottom: 20px;
+      color: #0a2b52;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
     }
 
     label {
       display: block;
-      margin-top: 15px;
-      font-weight: 600;
-      color: var(--primary);
+      margin-bottom: 5px;
+      color: #333;
     }
 
-    input {
+    input[type="text"] {
       width: 100%;
-      padding: 12px;
-      margin-top: 5px;
-      border: 1px solid #ccc;
+      padding: 10px;
+      box-sizing: border-box;
       border-radius: 4px;
+      border: 1px solid #ccc;
     }
 
-    button {
+    .login-btn {
       width: 100%;
-      padding: 12px;
-      margin-top: 25px;
-      background-color: var(--accent);
+      padding: 10px;
+      background-color: #409dbc;
       color: white;
-      font-weight: bold;
       border: none;
       border-radius: 4px;
+      font-weight: bold;
       cursor: pointer;
-      transition: background 0.3s ease;
     }
 
-    button:hover {
-      background-color: var(--primary);
+    .login-btn:hover {
+      background-color: #337f98;
     }
 
-    .footer-text {
-      text-align: center;
-      font-size: 0.9em;
-      color: #777;
-      margin-top: 15px;
-    }
-
-    .error-message {
+    .error {
       color: red;
       margin-top: 10px;
       text-align: center;
@@ -90,45 +71,48 @@
   </style>
 </head>
 <body>
-  <div class="login-container">
-    <h2>Driver Login</h2>
-    <form id="login-form">
-      <label for="username">Username</label>
+
+<div class="login-container">
+  <h2>Driver Login</h2>
+  <form onsubmit="login(event)">
+    <div class="form-group">
+      <label for="username">Driver Name</label>
       <input type="text" id="username" required />
+    </div>
 
-      <label for="password">Password</label>
-      <input type="password" id="password" required />
+    <!-- 👇 Password field removed -->
 
-      <button type="submit">Sign In</button>
-    </form>
-    <p class="error-message" id="error-message"></p>
-    <p class="footer-text">© MM Courier | Powered by Pakisa Logistics</p>
-  </div>
+    <button type="submit" class="login-btn">Login</button>
+    <div class="error" id="errorMsg"></div>
+  </form>
+</div>
 
-  <script>
-    document.getElementById('login-form').addEventListener('submit', async function (e) {
-      e.preventDefault();
+<script>
+  async function login(event) {
+    event.preventDefault();
 
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value.trim();
+    const username = document.getElementById('username').value.trim();
+    const password = 'bypass'; // ✅ Dummy password since check is disabled
 
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-
-      const result = await res.json();
-
-      if (res.ok) {
-        // ✅ Login success - redirect to trip sheet or dashboard
-        alert('Login successful. Welcome ' + result.driver.name);
-        window.location.href = `/tripsheet.html?driver=${encodeURIComponent(result.driver.name)}&route=${encodeURIComponent(result.driver.route)}`;
-      } else {
-        // ❌ Show error
-        document.getElementById('error-message').textContent = result.message || 'Login failed.';
-      }
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ username, password })
     });
-  </script>
+
+    const result = await response.json();
+
+    if (result.success) {
+      localStorage.setItem('mmcourier_loggedin', 'true');
+      localStorage.setItem('mmcourier_driver', result.driver.name);
+      window.location.href = '/tripsheet.html';
+    } else {
+      document.getElementById('errorMsg').textContent = result.message || 'Login failed';
+    }
+  }
+</script>
+
 </body>
 </html>
