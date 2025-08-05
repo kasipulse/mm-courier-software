@@ -9,29 +9,21 @@ const streamifier = require('streamifier');
 // 🔌 Supabase
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
-// 🔌 Cloudinary config
+// 🔌 Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD,
   api_key: process.env.CLOUDINARY_KEY,
   api_secret: process.env.CLOUDINARY_SECRET
 });
 
-// 📦 POD upload setup
+// 📦 Upload setup
 const upload = multer();
 
-// 🚚 Upload scan to FedEx (POD or DEX)
+/* ------------------ FEDEX SCAN UPLOAD ------------------ */
 router.post('/send-fedex-scan/:trackingNumber/:scanType', async (req, res) => {
   const { trackingNumber, scanType } = req.params;
-
-  const { data, error } = await supabase
-    .from('parcels')
-    .select('*')
-    .eq('tracking_number', trackingNumber)
-    .single();
-
-  if (error || !data) {
-    return res.status(404).json({ success: false, message: 'Parcel not found' });
-  }
+  const { data, error } = await supabase.from('parcels').select('*').eq('tracking_number', trackingNumber).single();
+  if (error || !data) return res.status(404).json({ success: false, message: 'Parcel not found' });
 
   const now = new Date();
   const pad = (n) => String(n).padStart(2, '0');
@@ -80,12 +72,10 @@ router.post('/send-fedex-scan/:trackingNumber/:scanType', async (req, res) => {
         <edr-line-nbr>44</edr-line-nbr>
         <edr-del-address>${data.delivery_address || 'N/A'}</edr-del-address>
       `;
-      break;
   }
 
   const xml = `
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v1="http://fedex.com/ws/uploadscan/v1">
-  <soapenv:Header/>
   <soapenv:Body>
     <v1:UploadScanRequest>
       <v1:WebAuthenticationDetail>
@@ -130,89 +120,95 @@ router.post('/send-fedex-scan/:trackingNumber/:scanType', async (req, res) => {
     const text = await response.text();
     console.log(`📤 FedEx ${scanType} Response:`, text);
 
-    if (response.ok) {
-      res.json({ success: true, message: `✅ ${scanType} sent to FedEx.` });
-    } else {
-      res.status(500).json({ success: false, message: `❌ ${scanType} failed`, detail: text });
-    }
+    response.ok
+      ? res.json({ success: true, message: `✅ ${scanType} sent to FedEx.` })
+      : res.status(500).json({ success: false, message: `❌ ${scanType} failed`, detail: text });
   } catch (err) {
     console.error('❌ FedEx Upload Error:', err.message);
     res.status(500).json({ success: false, message: `Error uploading ${scanType}` });
   }
 });
 
-// 🔐 DRIVER LOGIN: Password disabled for testing
+/* ------------------ DRIVER LOGIN (NO PASSWORD) ------------------ */
 router.post('/api/auth/login', async (req, res) => {
   const { username } = req.body;
+  console.log('🧪 Login attempt:', { username });
 
-  console.log('🧪 Login attempt with username only:', username);
+  if (!username) return res.status(400).json({ message: 'Missing username' });
 
-  if (!username) {
-    return res.status(400).json({ message: 'Missing username' });
-  }
+  const { data, error } = await supabase.from('drivers').select('*').eq('username', username).single();
+  if (error || !data) return res.status(401).json({ message: 'Driver not found' });
 
-  const { data, error } = await supabase
-    .from('drivers')
-    .select('*')
-    .eq('username', username)
-    .single();
-
-  console.log('🔍 Supabase response:', { data, error });
-
-  if (error || !data) {
-  console.log('❌ Invalid login attempt – driver not found');
-  return res.status(401).json({ message: 'Driver not found' });
-}
-
-// ✅ Skip password check for now
-console.log('✅ Login successful (no password check)');
-
-  console.log('✅ Login successful');
   res.json({
     success: true,
     message: 'Login successful',
-    driver: {
-      id: data.uuid,
-      name: data.driver_name,
-      route: data.route_number
-    }
+    driver: { id: data.uuid, name: data.driver_name, route: data.route_number }
   });
 });
 
-// 📸 POD Upload
+/* ------------------ POD UPLOAD ------------------ */
 router.post('/upload-pod/:parcelId', upload.single('pod'), async (req, res) => {
   const parcelId = req.params.parcelId;
   const file = req.file;
-
   if (!file) return res.status(400).json({ message: 'No file uploaded' });
 
-  const streamUpload = (buffer) => {
-    return new Promise((resolve, reject) => {
+  const streamUpload = (buffer) =>
+    new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream({ folder: 'mm-courier/pods' }, (error, result) => {
-        if (result) resolve(result);
-        else reject(error);
+        result ? resolve(result) : reject(error);
       });
       streamifier.createReadStream(buffer).pipe(stream);
     });
-  };
 
   try {
     const result = await streamUpload(file.buffer);
-
     const { error } = await supabase
       .from('parcels')
-      .update({
-        pod_url: result.secure_url,
-        pod_uploaded_at: new Date().toISOString()
-      })
+      .update({ pod_url: result.secure_url, pod_uploaded_at: new Date().toISOString() })
       .eq('id', parcelId);
-
     if (error) throw error;
 
     res.json({ success: true, message: 'POD uploaded', url: result.secure_url });
   } catch (err) {
     console.error('❌ POD Upload Error:', err.message);
     res.status(500).json({ success: false, message: 'Failed to upload POD', error: err.message });
+  }
+});
+
+/* ------------------ FEDEX SFTP SCAN FETCH ------------------ */
+const Client = require('ssh2-sftp-client');
+const fs = require('fs/promises');
+const path = require('path');
+
+router.get('/api/fetch-fedex-scans', async (req, res) => {
+  const sftp = new Client();
+  const remoteDir = '/inbound/mde';
+  const localDir = '/tmp/fedex_scans';
+  const processedFiles = [];
+
+  try {
+    await fs.mkdir(localDir, { recursive: true });
+    await sftp.connect({
+      host: process.env.FEDEX_SFTP_HOST,
+      port: 22,
+      username: process.env.FEDEX_SFTP_USER,
+      password: process.env.FEDEX_SFTP_PASS
+    });
+
+    const fileList = await sftp.list(remoteDir);
+    for (const file of fileList) {
+      if (file.name.endsWith('.xml')) {
+        const localPath = path.join(localDir, file.name);
+        await sftp.get(path.join(remoteDir, file.name), localPath);
+        processedFiles.push(file.name);
+      }
+    }
+
+    await sftp.end();
+    res.json({ success: true, message: `Fetched ${processedFiles.length} files.`, files: processedFiles });
+  } catch (err) {
+    console.error('❌ SFTP Fetch Error:', err.message);
+    res.status(500).json({ success: false, message: 'Error fetching scan files.', error: err.message });
   }
 });
 
