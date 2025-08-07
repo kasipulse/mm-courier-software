@@ -1,3 +1,4 @@
+const Client = require('ssh2-sftp-client');
 const express = require('express');
 const router = express.Router();
 const fetch = require('node-fetch');
@@ -5,7 +6,6 @@ const { createClient } = require('@supabase/supabase-js');
 const multer = require('multer');
 const { v2: cloudinary } = require('cloudinary');
 const streamifier = require('streamifier');
-const Client = require('ssh2-sftp-client');
 
 
 // 🔌 Supabase
