@@ -1,4 +1,3 @@
-const Client = require('ssh2-sftp-client');
 const express = require('express');
 const router = express.Router();
 const fetch = require('node-fetch');
@@ -6,7 +5,9 @@ const { createClient } = require('@supabase/supabase-js');
 const multer = require('multer');
 const { v2: cloudinary } = require('cloudinary');
 const streamifier = require('streamifier');
-
+const SFTPClient = require('ssh2-sftp-client');
+const fs = require('fs/promises');
+const path = require('path');
 
 // 🔌 Supabase
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
@@ -178,18 +179,15 @@ router.post('/upload-pod/:parcelId', upload.single('pod'), async (req, res) => {
 });
 
 /* ------------------ FEDEX SFTP SCAN FETCH ------------------ */
-const Client = require('ssh2-sftp-client');
-const fs = require('fs/promises');
-const path = require('path');
-
 router.get('/api/fetch-fedex-scans', async (req, res) => {
-  const sftp = new Client();
+  const sftp = new SFTPClient();
   const remoteDir = '/inbound/mde';
   const localDir = '/tmp/fedex_scans';
   const processedFiles = [];
 
   try {
     await fs.mkdir(localDir, { recursive: true });
+
     await sftp.connect({
       host: process.env.FEDEX_SFTP_HOST,
       port: 22,
@@ -198,54 +196,11 @@ router.get('/api/fetch-fedex-scans', async (req, res) => {
     });
 
     const fileList = await sftp.list(remoteDir);
-    for (const file of fileList) {
-      if (file.name.endsWith('.xml')) {
-        const localPath = path.join(localDir, file.name);
-        await sftp.get(path.join(remoteDir, file.name), localPath);
-        processedFiles.push(file.name);
-      }
-    }
-
-    await sftp.end();
-    res.json({ success: true, message: `Fetched ${processedFiles.length} files.`, files: processedFiles });
-  } catch (err) {
-    console.error('❌ SFTP Fetch Error:', err.message);
-    res.status(500).json({ success: false, message: 'Error fetching scan files.', error: err.message });
-  }
-});
-
-const Client = require('ssh2-sftp-client');
-const fs = require('fs/promises');
-const path = require('path');
-
-// 📥 Download FedEx scan XML files via SFTP
-router.get('/api/fetch-fedex-scans', async (req, res) => {
-  const sftp = new Client();
-  const remoteDir = '/inbound/mde'; // FedEx scan folder
-  const localDir = '/tmp/fedex_scans'; // Render-safe temp folder
-  const processedFiles = [];
-
-  try {
-    // Ensure local folder exists
-    await fs.mkdir(localDir, { recursive: true });
-
-    // ✅ Connect to FedEx SFTP using production credentials
-    await sftp.connect({
-      host: 'prod.ec.fedex.com',
-      port: 60022,
-      username: 'LNPZAPAKISA',
-      password: 'SuGBcr78hEz65Ux'
-    });
-
-    // 📄 List XML files in folder
-    const fileList = await sftp.list(remoteDir);
 
     for (const file of fileList) {
       if (file.name.endsWith('.xml')) {
         const remotePath = `${remoteDir}/${file.name}`;
         const localPath = path.join(localDir, file.name);
-
-        // ⬇️ Download XML file to Render /tmp directory
         await sftp.get(remotePath, localPath);
         processedFiles.push(file.name);
       }
@@ -267,6 +222,5 @@ router.get('/api/fetch-fedex-scans', async (req, res) => {
     });
   }
 });
-
 
 module.exports = router;
