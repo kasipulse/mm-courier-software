@@ -27,7 +27,9 @@
       margin-bottom: 20px;
       color: #0a2b52;
     }
-    .form-group { margin-bottom: 15px; }
+    .form-group {
+      margin-bottom: 15px;
+    }
     label {
       display: block;
       margin-bottom: 5px;
@@ -50,7 +52,9 @@
       font-weight: bold;
       cursor: pointer;
     }
-    .login-btn:hover { background-color: #337f98; }
+    .login-btn:hover {
+      background-color: #337f98;
+    }
     .error {
       color: red;
       margin-top: 10px;
@@ -72,13 +76,11 @@
   </form>
 </div>
 
-<!-- Load Supabase JS from CDN -->
 <script type="module">
   import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.3/+esm';
 
-  // 🔹 Replace with your own Supabase credentials
-  const SUPABASE_URL = 'https://YOUR-PROJECT-REF.supabase.co';
-  const SUPABASE_ANON_KEY = 'YOUR-ANON-KEY';
+  const SUPABASE_URL = 'https://ntvgybqkuceoxhyqnknx.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50dmd5YnFrdWNlb3hoeXFua254Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAzMzg3NTAsImV4cCI6MjA2NTkxNDc1MH0.YGdEEumuk7NXr0NrWv8T7Dga9kv19N4Hpnjh4dDoiCQ';
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -88,11 +90,10 @@
 
     const username = document.getElementById('username').value.trim();
 
-    // Check if driver exists in Supabase
     const { data, error } = await supabase
       .from('drivers')
       .select('*')
-      .ilike('name', username) // case-insensitive match
+      .ilike('name', username)
       .limit(1)
       .single();
 
@@ -101,13 +102,11 @@
       return;
     }
 
-    // Store in localStorage and redirect
     localStorage.setItem('mmcourier_loggedin', 'true');
     localStorage.setItem('mmcourier_driver', data.name);
     window.location.href = '/tripsheet.html';
   }
 
-  // Make login available to HTML form
   window.login = login;
 </script>
 
