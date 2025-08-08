@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Driver Login - MM Courier</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -14,6 +15,7 @@
       height: 100vh;
       margin: 0;
     }
+
     .login-container {
       background-color: white;
       padding: 30px;
@@ -22,19 +24,23 @@
       width: 100%;
       max-width: 400px;
     }
+
     h2 {
       text-align: center;
       margin-bottom: 20px;
       color: #0a2b52;
     }
+
     .form-group {
       margin-bottom: 15px;
     }
+
     label {
       display: block;
       margin-bottom: 5px;
       color: #333;
     }
+
     input[type="text"] {
       width: 100%;
       padding: 10px;
@@ -42,6 +48,7 @@
       border-radius: 4px;
       border: 1px solid #ccc;
     }
+
     .login-btn {
       width: 100%;
       padding: 10px;
@@ -52,9 +59,11 @@
       font-weight: bold;
       cursor: pointer;
     }
+
     .login-btn:hover {
       background-color: #337f98;
     }
+
     .error {
       color: red;
       margin-top: 10px;
@@ -71,43 +80,65 @@
       <label for="username">Driver Name</label>
       <input type="text" id="username" required />
     </div>
+
     <button type="submit" class="login-btn">Login</button>
     <div class="error" id="errorMsg"></div>
   </form>
 </div>
 
-<script type="module">
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.3/+esm';
-
+<script>
+  // ✅ Supabase credentials
   const SUPABASE_URL = 'https://ntvgybqkuceoxhyqnknx.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50dmd5YnFrdWNlb3hoeXFua254Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAzMzg3NTAsImV4cCI6MjA2NTkxNDc1MH0.YGdEEumuk7NXr0NrWv8T7Dga9kv19N4Hpnjh4dDoiCQ';
 
-  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   async function login(event) {
     event.preventDefault();
     document.getElementById('errorMsg').textContent = '';
 
     const username = document.getElementById('username').value.trim();
-
-    const { data, error } = await supabase
-      .from('drivers')
-      .select('*')
-      .ilike('name', username)
-      .limit(1)
-      .single();
-
-    if (error || !data) {
-      document.getElementById('errorMsg').textContent = 'Driver not found';
+    if (!username) {
+      document.getElementById('errorMsg').textContent = 'Please enter your name';
       return;
     }
 
-    localStorage.setItem('mmcourier_loggedin', 'true');
-    localStorage.setItem('mmcourier_driver', data.name);
-    window.location.href = '/tripsheet.html';
-  }
+    try {
+      // 1️⃣ Check if driver exists
+      const { data: existingDriver, error: fetchError } = await supabase
+        .from('drivers')
+        .select('*')
+        .eq('name', username)
+        .single();
 
-  window.login = login;
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        throw fetchError;
+      }
+
+      let driver = existingDriver;
+
+      // 2️⃣ If not found, insert new driver
+      if (!driver) {
+        const { data: newDriver, error: insertError } = await supabase
+          .from('drivers')
+          .insert([{ name: username }])
+          .select()
+          .single();
+
+        if (insertError) throw insertError;
+        driver = newDriver;
+      }
+
+      // 3️⃣ Store in localStorage and redirect
+      localStorage.setItem('mmcourier_loggedin', 'true');
+      localStorage.setItem('mmcourier_driver', driver.name);
+      window.location.href = '/tripsheet.html';
+
+    } catch (err) {
+      console.error(err);
+      document.getElementById('errorMsg').textContent = 'Login failed. Please try again.';
+    }
+  }
 </script>
 
 </body>
