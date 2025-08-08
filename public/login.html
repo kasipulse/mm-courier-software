@@ -14,7 +14,6 @@
       height: 100vh;
       margin: 0;
     }
-
     .login-container {
       background-color: white;
       padding: 30px;
@@ -23,23 +22,17 @@
       width: 100%;
       max-width: 400px;
     }
-
     h2 {
       text-align: center;
       margin-bottom: 20px;
       color: #0a2b52;
     }
-
-    .form-group {
-      margin-bottom: 15px;
-    }
-
+    .form-group { margin-bottom: 15px; }
     label {
       display: block;
       margin-bottom: 5px;
       color: #333;
     }
-
     input[type="text"] {
       width: 100%;
       padding: 10px;
@@ -47,7 +40,6 @@
       border-radius: 4px;
       border: 1px solid #ccc;
     }
-
     .login-btn {
       width: 100%;
       padding: 10px;
@@ -58,11 +50,7 @@
       font-weight: bold;
       cursor: pointer;
     }
-
-    .login-btn:hover {
-      background-color: #337f98;
-    }
-
+    .login-btn:hover { background-color: #337f98; }
     .error {
       color: red;
       margin-top: 10px;
@@ -79,39 +67,48 @@
       <label for="username">Driver Name</label>
       <input type="text" id="username" required />
     </div>
-
-    <!-- 👇 Password field removed -->
-
     <button type="submit" class="login-btn">Login</button>
     <div class="error" id="errorMsg"></div>
   </form>
 </div>
 
-<script>
+<!-- Load Supabase JS from CDN -->
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.3/+esm';
+
+  // 🔹 Replace with your own Supabase credentials
+  const SUPABASE_URL = 'https://YOUR-PROJECT-REF.supabase.co';
+  const SUPABASE_ANON_KEY = 'YOUR-ANON-KEY';
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
   async function login(event) {
     event.preventDefault();
+    document.getElementById('errorMsg').textContent = '';
 
     const username = document.getElementById('username').value.trim();
-    const password = 'bypass'; // ✅ Dummy password since check is disabled
 
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ username, password })
-    });
+    // Check if driver exists in Supabase
+    const { data, error } = await supabase
+      .from('drivers')
+      .select('*')
+      .ilike('name', username) // case-insensitive match
+      .limit(1)
+      .single();
 
-    const result = await response.json();
-
-    if (result.success) {
-      localStorage.setItem('mmcourier_loggedin', 'true');
-      localStorage.setItem('mmcourier_driver', result.driver.name);
-      window.location.href = '/tripsheet.html';
-    } else {
-      document.getElementById('errorMsg').textContent = result.message || 'Login failed';
+    if (error || !data) {
+      document.getElementById('errorMsg').textContent = 'Driver not found';
+      return;
     }
+
+    // Store in localStorage and redirect
+    localStorage.setItem('mmcourier_loggedin', 'true');
+    localStorage.setItem('mmcourier_driver', data.name);
+    window.location.href = '/tripsheet.html';
   }
+
+  // Make login available to HTML form
+  window.login = login;
 </script>
 
 </body>
