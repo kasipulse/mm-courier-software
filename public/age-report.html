@@ -2,209 +2,115 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Age Analysis Report | MM Courier</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Age Report</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    :root {
-      --primary: #0a2b52;
-      --accent: #409dbc;
-      --highlight: #cebd80;
-      --bg: #ffffff;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', sans-serif;
-    }
-
-    body {
-      display: flex;
-      background: var(--bg);
-    }
-
-    .sidebar {
-      width: 250px;
-      background: var(--primary);
-      color: #fff;
-      height: 100vh;
-      padding: 20px;
-      position: fixed;
-      transition: width 0.3s;
-    }
-
-    .sidebar.collapsed {
-      width: 60px;
-    }
-
-    .sidebar h2 {
-      font-size: 1.5em;
-      margin-bottom: 30px;
-    }
-
-    .sidebar a {
-      display: block;
-      padding: 12px;
-      margin-bottom: 10px;
-      color: #fff;
-      text-decoration: none;
-      border-radius: 4px;
-      transition: background 0.2s;
-    }
-
-    .sidebar a:hover {
-      background: var(--accent);
-    }
-
-    .main {
-      margin-left: 250px;
-      padding: 30px;
-      flex: 1;
-      transition: margin-left 0.3s;
-    }
-
-    .sidebar.collapsed ~ .main {
-      margin-left: 60px;
-    }
-
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: var(--highlight);
-      padding: 10px 20px;
-      border-radius: 6px;
-      margin-bottom: 30px;
-    }
-
-    .toggle-btn {
-      cursor: pointer;
-      background: transparent;
-      border: none;
-      font-size: 1.2em;
-      color: #000;
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-    }
-
-    .logo img {
-      height: 40px;
-      margin-right: 10px;
-    }
-
-    h1 {
-      color: var(--primary);
-      margin-bottom: 20px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-
-    th, td {
-      border: 1px solid #ccc;
-      padding: 10px;
-      text-align: left;
-    }
-
-    th {
-      background: var(--accent);
-      color: white;
-    }
-
-    tr:nth-child(even) {
-      background: #f2f2f2;
-    }
-
-    .no-data {
-      color: red;
-      margin-top: 20px;
-    }
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .filters { margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #f4f4f4; }
+    button { padding: 6px 12px; }
   </style>
 </head>
 <body>
-  <div class="sidebar" id="sidebar">
-    <h2>MM Courier</h2>
-    <a href="dashboard.html">📊 Dashboard</a>
-    <a href="age-report.html">📅 Age Analysis</a>
-    <a href="daily-report.html">🚚 Daily Deliveries</a>
-    <a href="exceptions-report.html">⚠️ Scan Exceptions</a>
-    <a href="driver-performance.html">🧑‍✈️ Driver Performance</a>
-    <a href="client-report.html">🏢 Client Delivery</a>
-    <a href="pod-compliance.html">🖊 POD Compliance</a>
-    <a href="billing-summary.html">💰 Billing Summary</a>
-    <a href="tripsheet-summary.html">📋 Trip Sheet Summary</a>
-    <a href="index.html">🏠 Home</a>
-  </div>
 
-  <div class="main" id="main">
-    <div class="topbar">
-      <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
-      <div class="logo">
-        <img src="https://res.cloudinary.com/dwxgkbuln/image/upload/v1750675472/pakisa_logistics_express_pty_ltd_logo-removebg-preview_kbuvzs.png" alt="MM Courier Logo" />
-        <strong>Age Analysis Report</strong>
-      </div>
-    </div>
+<h1>📊 Age Report</h1>
 
-    <h1>📅 Outstanding Parcels</h1>
-    <table id="reportTable">
-      <thead>
-        <tr>
-          <th>Tracking Number</th>
-          <th>Customer</th>
-          <th>Waybill</th>
-          <th>Status</th>
-          <th>Received Date</th>
-        </tr>
-      </thead>
-      <tbody id="reportBody"></tbody>
-    </table>
-    <p id="noData" class="no-data" style="display:none;">No outstanding parcels found.</p>
-  </div>
+<div class="filters">
+  <input type="text" id="driverFilter" placeholder="Driver Name">
+  <input type="date" id="startDate">
+  <input type="date" id="endDate">
+  <select id="statusFilter">
+    <option value="">All Status</option>
+    <option value="Pending">Pending</option>
+    <option value="Delivered">Delivered</option>
+    <option value="Exception">Exception</option>
+  </select>
+  <button onclick="loadReport()">Apply Filters</button>
+  <button onclick="exportCSV()">Export CSV</button>
+</div>
 
-  <script>
-    function toggleSidebar() {
-      document.getElementById('sidebar').classList.toggle('collapsed');
-      document.getElementById('main').classList.toggle('collapsed');
+<table id="reportTable">
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>Driver</th>
+      <th>Status</th>
+      <th>Age (days)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td colspan="4">Loading...</td></tr>
+  </tbody>
+</table>
+
+<script>
+  const SUPABASE_URL = "https://ntvgybqkuceoxhyqnknx.supabase.co";
+  const SUPABASE_KEY = "YOUR-ANON-KEY-HERE"; // 🔑 Replace with your anon key
+  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  async function loadReport() {
+    const driver = document.getElementById('driverFilter').value.trim();
+    const start = document.getElementById('startDate').value;
+    const end = document.getElementById('endDate').value;
+    const status = document.getElementById('statusFilter').value;
+
+    let query = supabase.from('age_report').select('*').order('date', { ascending: false });
+
+    if (driver) query = query.ilike('driver_name', `%${driver}%`);
+    if (status) query = query.eq('status', status);
+    if (start) query = query.gte('date', start);
+    if (end) query = query.lte('date', end);
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error(error);
+      alert("Error loading report");
+      return;
     }
 
-    async function loadReport() {
-      try {
-        const res = await fetch('/api/parcels');
-        const parcels = await res.json();
-        const body = document.getElementById('reportBody');
-        const noData = document.getElementById('noData');
+    const tbody = document.querySelector('#reportTable tbody');
+    tbody.innerHTML = '';
 
-        const filtered = parcels.filter(p => p.status === 'Pending' || !p.received_date);
-
-        if (filtered.length === 0) {
-          noData.style.display = 'block';
-          return;
-        }
-
-        filtered.forEach(p => {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${p.tracking_number || '-'}</td>
-            <td>${p.customer || '-'}</td>
-            <td>${p.waybill_number || '-'}</td>
-            <td>${p.status || '-'}</td>
-            <td>${p.received_date || 'Not Received'}</td>
-          `;
-          body.appendChild(row);
-        });
-      } catch (err) {
-        console.error('Error loading report:', err);
-      }
+    if (data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4">No results</td></tr>';
+      return;
     }
 
-    loadReport();
-  </script>
+    data.forEach(row => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${row.date}</td>
+        <td>${row.driver_name}</td>
+        <td>${row.status}</td>
+        <td>${row.age_days}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function exportCSV() {
+    const rows = [];
+    const table = document.getElementById('reportTable');
+    for (let tr of table.querySelectorAll('tr')) {
+      const cells = Array.from(tr.querySelectorAll('th, td')).map(td => `"${td.innerText}"`);
+      rows.push(cells.join(','));
+    }
+    const csvContent = rows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `age_report_${new Date().toISOString().slice(0,10)}.csv`;
+    link.click();
+  }
+
+  // Load initial report
+  loadReport();
+</script>
+
 </body>
 </html>
