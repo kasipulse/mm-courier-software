@@ -11,7 +11,7 @@
     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
     th { background-color: #f4f4f4; }
-    button { padding: 6px 12px; }
+    button { padding: 6px 12px; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -47,9 +47,10 @@
 </table>
 
 <script>
+  // ✅ Replace with your Supabase details
   const SUPABASE_URL = "https://ntvgybqkuceoxhyqnknx.supabase.co";
-  const SUPABASE_KEY = "YOUR-ANON-KEY-HERE"; // 🔑 Replace with your anon key
-  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const SUPABASE_KEY = "YOUR-ANON-KEY-HERE"; // 🔑 replace with anon key
+  const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   async function loadReport() {
     const driver = document.getElementById('driverFilter').value.trim();
@@ -57,36 +58,43 @@
     const end = document.getElementById('endDate').value;
     const status = document.getElementById('statusFilter').value;
 
-    let query = supabase.from('age_report').select('*').order('date', { ascending: false });
+    let query = client.from('parcels')
+      .select('created_at, driver_name, status, delivered_at')
+      .order('created_at', { ascending: false });
 
     if (driver) query = query.ilike('driver_name', `%${driver}%`);
     if (status) query = query.eq('status', status);
-    if (start) query = query.gte('date', start);
-    if (end) query = query.lte('date', end);
+    if (start) query = query.gte('created_at', start);
+    if (end) query = query.lte('created_at', end);
 
     const { data, error } = await query;
 
     if (error) {
       console.error(error);
-      alert("Error loading report");
+      alert("❌ Error loading report");
       return;
     }
 
     const tbody = document.querySelector('#reportTable tbody');
     tbody.innerHTML = '';
 
-    if (data.length === 0) {
+    if (!data || data.length === 0) {
       tbody.innerHTML = '<tr><td colspan="4">No results</td></tr>';
       return;
     }
 
     data.forEach(row => {
+      // calculate age in days
+      const created = new Date(row.created_at);
+      const delivered = row.delivered_at ? new Date(row.delivered_at) : new Date();
+      const ageDays = Math.floor((delivered - created) / (1000 * 60 * 60 * 24));
+
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${row.date}</td>
-        <td>${row.driver_name}</td>
+        <td>${created.toISOString().split('T')[0]}</td>
+        <td>${row.driver_name || '-'}</td>
         <td>${row.status}</td>
-        <td>${row.age_days}</td>
+        <td>${ageDays}</td>
       `;
       tbody.appendChild(tr);
     });
